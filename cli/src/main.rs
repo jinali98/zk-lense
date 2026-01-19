@@ -25,9 +25,12 @@ enum Commands {
     Table,
     /// Example: Show a progress bar
     Progress,
+    /// Example: Simulate a transaction
+    Simulate,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
@@ -48,6 +51,11 @@ fn main() {
         }
         Some(Commands::Progress) => {
             commands::run_progress();
+        }
+        Some(Commands::Simulate) => {
+            if let Err(e) = commands::run_simulate().await {
+                eprintln!("Error: {}", e);
+            }
         }
         None => {
             println!("zkprof: ZK Profiling Tool");
