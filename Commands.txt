@@ -1,0 +1,10 @@
+RUN
+cargo run -- hello
+
+
+BUILD - RELEASE
+cargo build --release
+
+
+BUILD - INSTALL
+cargo install --path . --force
