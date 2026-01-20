@@ -5,8 +5,7 @@ use std::path::PathBuf;
 use std::thread;
 use console::style;
 
-
-const WEB_APP_URL: &str = "https://zk-profiling.netlify.app/";
+use crate::commands::init::{read_config, DEFAULT_WEB_APP_URL};
 
 pub fn run_view(path: Option<String>) {
     // Determine the project directory
@@ -68,6 +67,15 @@ pub fn run_view(path: Option<String>) {
         std::process::exit(1);
     }
 
+    // Read web app URL from config, fallback to default
+    let web_app_url = match read_config(&project_dir) {
+        Ok(config) => config
+            .get("web_app_url")
+            .cloned()
+            .unwrap_or_else(|| DEFAULT_WEB_APP_URL.to_string()),
+        Err(_) => DEFAULT_WEB_APP_URL.to_string(),
+    };
+
     // Find an available port
     let listener = match TcpListener::bind("127.0.0.1:0") {
         Ok(l) => l,
@@ -89,7 +97,7 @@ pub fn run_view(path: Option<String>) {
     );
 
     // Build the web app URL with the port parameter
-    let viewer_url = format!("{}?port={}", WEB_APP_URL, port);
+    let viewer_url = format!("{}?port={}", web_app_url, port);
 
     println!(
         "{} Opening viewer at {}",
