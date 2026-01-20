@@ -62,6 +62,7 @@ async fn main() {
             if let Err(e) = commands::run_simulate().await {
                 eprintln!("Error: {}", e);
             }
+        }
         Some(Commands::Initialize { path }) => {
             commands::run_init(path);
         }
