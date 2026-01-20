@@ -1,0 +1,277 @@
+{
+    "compute_units": {
+      "compute_budget": 500000,
+      "percentage_of_compute_budget_used": "35.04%",
+      "suggestion": "Compute usage is within acceptable range",
+      "total_compute_units_consumed": 175189,
+      "total_cu": 175189
+    },
+    "cost": {
+      "base_fee": 5000,
+      "cost_in_lamports": 5000,
+      "cost_in_sol": "0.000005000",
+      "cu_limit": 500000,
+      "cu_price_microlamports": 0,
+      "gas_fee": 5000,
+      "prioritization_fee": 0,
+      "priority": "0.009999960",
+      "priority_fee": 0,
+      "signature_cus": 0,
+      "suggestion": "Consider adding priority fee for faster confirmation",
+      "total_fee": 5000,
+      "write_lock_cus": 1
+    },
+    "deserialization": {
+      "success": true,
+      "suggestion": "Transaction deserialized successfully"
+    },
+    "fee_recommendation": {
+      "base_fee": 5000,
+      "cu_limit": 500000,
+      "cu_price_microlamports": 0,
+      "prioritization_fee": 0,
+      "priority": "0.009999960",
+      "priority_fee": 0,
+      "suggestion": "Consider adding priority fee for faster confirmation",
+      "total_fee": 5000
+    },
+    "heap_usage": {
+      "heap_size": 0,
+      "suggestion": "Monitor heap usage in program execution"
+    },
+    "proof": {
+      "cu_per_proof_size": "476.0571",
+      "proof_size": 324,
+      "total_proof_witness_size": 368,
+      "witness_size": 44
+    },
+    "recent_prioritization_fees": [
+      {
+        "prioritization_fee": 0,
+        "slot": 436259896
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259895
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259894
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259893
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259892
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259891
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259890
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259889
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259888
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259887
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259886
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259885
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259884
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259883
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259882
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259881
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259880
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259879
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259878
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259877
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259876
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259875
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259874
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259873
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259872
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259871
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259870
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259869
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259868
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259867
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259866
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259865
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259864
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259863
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259862
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259861
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259860
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259859
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259858
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259857
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259856
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259855
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259854
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259853
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259852
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259851
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259850
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259849
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259848
+      },
+      {
+        "prioritization_fee": 0,
+        "slot": 436259847
+      }
+    ],
+    "transaction_logs": {
+      "log_count": 6,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 68V29RzWpHhYS5qdu9ovcAfDCLeddhYMH7vafy53PvdB invoke [1]",
+        "Program log: Proof verified successfully!",
+        "Program 68V29RzWpHhYS5qdu9ovcAfDCLeddhYMH7vafy53PvdB consumed 175039 of 1399850 compute units",
+        "Program 68V29RzWpHhYS5qdu9ovcAfDCLeddhYMH7vafy53PvdB success"
+      ]
+    },
+    "transaction_size": {
+      "max_message_size": 1232,
+      "message": "Success: Message size (516) is within limits (1232)",
+      "message_size": 516,
+      "message_within_size": true,
+      "proof_size": 324,
+      "suggestion": "Transaction size (516) is within limits",
+      "total_proof_witness_size": 368,
+      "transaction_size": 581,
+      "witness_size": 44
+    },
+    "transaction_status": {
+      "error": null,
+      "status": "Success",
+      "suggestion": "Transaction simulation successful"
+    }
+  }

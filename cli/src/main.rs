@@ -22,6 +22,12 @@ enum Commands {
         /// Path to initialize zkproof in (relative or absolute). Defaults to current directory.
         path: Option<String>,
     },
+
+    #[command(name = "view")]
+    View {
+        /// Path to the project directory. Defaults to current directory.
+        path: Option<String>,
+    },
     /// Example: Display emojis in output
     #[command(name = "testcommand")]
     Emoji,
@@ -57,6 +63,9 @@ fn main() {
         }
         Some(Commands::Initialize { path }) => {
             commands::run_init(path);
+        }
+        Some(Commands::View { path }) => {
+            commands::run_view(path);
         }
         None => {
             println!("zkprof: ZK Profiling Tool");
