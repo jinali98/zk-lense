@@ -6,13 +6,27 @@ use std::thread;
 use console::style;
 
 
-const WEB_APP_URL: &str = "http://localhost:3000";
+const WEB_APP_URL: &str = "https://zk-profiling.netlify.app/";
 
 pub fn run_view(path: Option<String>) {
     // Determine the project directory
     let project_dir = match path {
         Some(p) => PathBuf::from(p),
-        None => std::env::current_dir().expect("Failed to get current directory"),
+        None => match std::env::current_dir() {
+            Ok(dir) => dir,
+            Err(e) => {
+                eprintln!(
+                    "{} Failed to get current directory: {}",
+                    style("✖").red().bold(),
+                    e
+                );
+                eprintln!(
+                    "  {} Try specifying a path: zkprof view /path/to/project",
+                    style("→").dim()
+                );
+                std::process::exit(1);
+            }
+        },
     };
 
     let zkproof_dir = project_dir.join(".zkproof");
