@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 const ZKPROOF_DIR: &str = ".zkproof";
 const CONFIG_FILE: &str = "config.toml";
+pub const DEFAULT_WEB_APP_URL: &str = "http://localhost:8081/";
 
 /// Configuration structure for zkproof
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -20,6 +21,7 @@ impl ZkProofConfig {
         let mut settings = HashMap::new();
         settings.insert("version".to_string(), "0.1.0".to_string());
         settings.insert("initialized_at".to_string(), chrono_timestamp());
+        settings.insert("web_app_url".to_string(), DEFAULT_WEB_APP_URL.to_string());
         Self { settings }
     }
 
@@ -156,9 +158,27 @@ pub fn run_init(path: Option<String>) {
 
     // Check if already initialized
     if zkproof_dir.exists() {
-        println!("⚠️  zkproof is already initialized at: {}", zkproof_dir.display());
-        if config_path.exists() {
-            println!("   Config file exists at: {}", config_path.display());
+        println!("ℹ️  zkproof directory already exists at: {}", zkproof_dir.display());
+        
+        // Check if config.toml exists, recreate if missing
+        if !config_path.exists() {
+            println!("⚠️  Config file missing, recreating...");
+            let config = ZkProofConfig::new();
+            match config.save(&config_path) {
+                Ok(_) => {
+                    println!("✅ Recreated config file: {}", config_path.display());
+                    println!();
+                    println!("Configuration:");
+                    for (key, value) in &config.settings {
+                        println!("   {} = {}", key, value);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("❌ Failed to recreate config file: {}", e);
+                }
+            }
+        } else {
+            println!("✅ Config file exists at: {}", config_path.display());
         }
         return;
     }
