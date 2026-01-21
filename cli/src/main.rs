@@ -22,7 +22,11 @@ enum Commands {
         path: Option<String>,
     },
     #[command(name = "simulate")]
-    Simulate,
+    Simulate {
+        /// Program ID to simulate against
+        #[arg(short, long)]
+        program_id: Option<String>,
+    },
     #[command(name = "run")]
     Run {
         path: Option<String>,
@@ -50,11 +54,11 @@ async fn main() {
         Some(Commands::Version) => {
             commands::run_version();
         }
-        Some(Commands::Simulate) => {
+        Some(Commands::Simulate { program_id }) => {
             if !check_initialized(None) {
                 return;
             }
-            if let Err(e) = commands::run_simulate().await {
+            if let Err(e) = commands::run_simulate(program_id).await {
                 eprintln!("Error: {}", e);
             }
         }

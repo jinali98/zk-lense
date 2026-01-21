@@ -304,8 +304,22 @@ fn create_simulation_json(
     })
 }
 
-pub async fn run_simulate() -> Result<()> {
-    let program_id_str = "68V29RzWpHhYS5qdu9ovcAfDCLeddhYMH7vafy53PvdB";
+pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
+    // Get program ID from argument or prompt user
+    let program_id_str = match program_id_arg {
+        Some(id) => id,
+        None => {
+            print!("Enter Solana program ID: ");
+            std::io::Write::flush(&mut std::io::stdout())?;
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input)?;
+            input.trim().to_string()
+        }
+    };
+    
+    if program_id_str.is_empty() {
+        return Err(anyhow::anyhow!("Program ID cannot be empty"));
+    }
     
     // Read proof and witness files (automatically found by extension)
     let proof_result = read_proof_files()?;
