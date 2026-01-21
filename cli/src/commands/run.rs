@@ -83,6 +83,31 @@ fn run_command(cmd: &str, args: &[&str], working_dir: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// Run a command and capture its output
+fn run_command_capture(cmd: &str, args: &[&str], working_dir: &Path) -> io::Result<String> {
+    println!("  Running: {} {}", cmd, args.join(" "));
+    
+    let output = Command::new(cmd)
+        .args(args)
+        .current_dir(working_dir)
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!(
+                "Command '{}' failed with exit code: {:?}\n{}",
+                cmd,
+                output.status.code(),
+                stderr
+            ),
+        ));
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
 /// Pipeline step definition
 struct PipelineStep {
     name: &'static str,
@@ -319,15 +344,31 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
                 ));
             }
             
-            run_command(
+            let output = run_command_capture(
                 "solana",
                 &["program", "deploy", program_path.to_str().unwrap()],
                 &target_dir,
             )?;
             
+            // Parse Program ID from output (format: "Program Id: <address>")
+            let program_id = output
+                .lines()
+                .find(|line| line.contains("Program Id:"))
+                .and_then(|line| line.split(':').nth(1))
+                .map(|id| id.trim())
+                .unwrap_or("Unknown");
+            
             println!("\n═══════════════════════════════════════════════════════════════");
             println!("  🎉 Solana program deployed successfully!");
-            println!("═══════════════════════════════════════════════════════════════\n");
+            println!("═══════════════════════════════════════════════════════════════");
+            println!();
+            println!("  ┌─────────────────────────────────────────────────────────────┐");
+            println!("  │  📍 PROGRAM ID                                              │");
+            println!("  │                                                             │");
+            println!("  │  {}  │", format!("{:^55}", program_id));
+            println!("  │                                                             │");
+            println!("  └─────────────────────────────────────────────────────────────┘");
+            println!();
         } else {
             println!("\n   Deployment skipped.");
         }
