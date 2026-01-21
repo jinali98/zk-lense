@@ -292,6 +292,49 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
     println!("   • {}.vk        - Verifying key", circuit_name);
     println!("   • {}.proof     - Groth16 proof", circuit_name);
     println!("   • {}.pw        - Public witness", circuit_name);
+    println!("   • {}.so        - Solana program", circuit_name);
+
+    // Prompt user to deploy the Solana program
+    let program_path = target_dir.join(format!("{}.so", circuit_name));
+    
+    if program_path.exists() {
+        println!("\n🚀 Solana Program Deployment");
+        println!("───────────────────────────────────────────────────────────────");
+        println!("   Program file: {}", program_path.display());
+        print!("\n   Do you want to deploy the Solana program? (y/n): ");
+        io::Write::flush(&mut io::stdout())?;
+        
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        
+        let consent = input.trim().to_lowercase();
+        if consent == "y" || consent == "yes" {
+            println!("\n📤 Deploying Solana program...\n");
+            
+            // Check if solana CLI exists
+            if !command_exists("solana") {
+                return Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "Solana CLI not found. Install it from: https://docs.solana.com/cli/install-solana-cli-tools",
+                ));
+            }
+            
+            run_command(
+                "solana",
+                &["program", "deploy", program_path.to_str().unwrap()],
+                &target_dir,
+            )?;
+            
+            println!("\n═══════════════════════════════════════════════════════════════");
+            println!("  🎉 Solana program deployed successfully!");
+            println!("═══════════════════════════════════════════════════════════════\n");
+        } else {
+            println!("\n   Deployment skipped.");
+        }
+    } else {
+        println!("\n⚠️  No .so file found at: {}", program_path.display());
+        println!("   Skipping deployment prompt.");
+    }
 
     Ok(())
 }

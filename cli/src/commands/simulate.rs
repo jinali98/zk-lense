@@ -418,7 +418,7 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
 
     // Print formatted JSON
     let json_output = serde_json::to_string_pretty(&simulation_json)?;
-    println!("{}", json_output);
+
 
     // Save to .zkproof/report.json
     let zkproof_dir = std::env::current_dir()?.join(".zkproof");
@@ -429,7 +429,13 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     fs::write(&report_path, &json_output)
         .with_context(|| format!("Failed to write report to: {}", report_path.display()))?;
     
-    println!("\nReport saved to: {}", report_path.display());
+        println!("═══════════════════════════════════════════════════════════════");
+        println!("  🎉 Simulation completed successfully!");
+        println!("═══════════════════════════════════════════════════════════════\n");
+
+        println!("═══════════════════════════════════════════════════════════════");
+        println!("  🎉 Report saved to: {}", report_path.display());
+        println!("═══════════════════════════════════════════════════════════════\n");
 
     Ok(())
 }
