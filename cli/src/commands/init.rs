@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 const ZKPROOF_DIR: &str = ".zkproof";
 const CONFIG_FILE: &str = "config.toml";
-pub const DEFAULT_WEB_APP_URL: &str = "http://localhost:8081/";
+pub const DEFAULT_WEB_APP_URL: &str = "https://zkprofile.netlify.app/";
 
 /// Configuration structure for zkproof
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -115,6 +115,60 @@ fn chrono_timestamp() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default();
     format!("{}", duration.as_secs())
+}
+
+/// Resolve and validate a path from an optional string, defaulting to current directory
+pub fn resolve_project_path(path: Option<&str>) -> io::Result<PathBuf> {
+    match path {
+        Some(p) => resolve_path(p),
+        None => std::env::current_dir(),
+    }
+}
+
+/// Check if the project is initialized, and if not, prompt the user to initialize.
+/// Returns Ok(true) if initialized (or just initialized), Ok(false) if user declined,
+/// or an error if something went wrong.
+pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
+    let base_path = resolve_project_path(path)?;
+
+    if !base_path.exists() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("Path does not exist: {}", base_path.display()),
+        ));
+    }
+
+    if is_initialized(&base_path) {
+        return Ok(true);
+    }
+
+    // Prompt user
+    println!(
+        "⚠️  zkprof is not initialized in: {}",
+        base_path.display()
+    );
+    print!("Would you like to initialize it now? [y/N]: ");
+    io::stdout().flush()?;
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    let input = input.trim().to_lowercase();
+
+    if input == "y" || input == "yes" {
+        run_init(Some(base_path.to_string_lossy().to_string()));
+        // Check if initialization succeeded
+        if is_initialized(&base_path) {
+            Ok(true)
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Initialization failed",
+            ))
+        }
+    } else {
+        println!("ℹ️  Run 'zkprof init' to initialize the project first.");
+        Ok(false)
+    }
 }
 
 /// Resolve a path (handles both relative and absolute paths)
