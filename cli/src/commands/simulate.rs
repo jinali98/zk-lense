@@ -340,7 +340,7 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     );
 
     // Parse program ID
-    let program_id = Pubkey::from_str(program_id_str)?;
+    let program_id = Pubkey::from_str(&program_id_str)?;
     
     // Create a keypair for the fee payer (can be loaded from file or generated)
     // For simulation, we can use a dummy keypair
