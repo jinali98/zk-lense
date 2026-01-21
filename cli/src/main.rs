@@ -12,23 +12,19 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Version,
-    /// Initialize a new zkproof project
+
     #[command(name = "init")]
     Initialize {
-        /// Path to initialize zkproof in (relative or absolute). Defaults to current directory.
         path: Option<String>,
     },
     #[command(name = "view")]
     View {
-        /// Path to the project directory. Defaults to current directory.
         path: Option<String>,
     },
-    /// Example: Display emojis in output
+    #[command(name = "simulate")]
     Simulate,
-    /// Run the full Noir circuit build and proof generation pipeline
     #[command(name = "run")]
     Run {
-        /// Path to the Noir project directory. Defaults to current directory.
         path: Option<String>,
     },
 }
@@ -52,7 +48,6 @@ async fn main() {
 
     match cli.command {
         Some(Commands::Version) => {
-            // Version command doesn't require initialization
             commands::run_version();
         }
         Some(Commands::Simulate) => {
@@ -64,7 +59,6 @@ async fn main() {
             }
         }
         Some(Commands::Initialize { path }) => {
-            // init command doesn't check initialization (it IS initialization)
             commands::run_init(path);
         }
         Some(Commands::View { path }) => {
