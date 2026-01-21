@@ -10,7 +10,7 @@ fn main(
     path_elements: pub [Field; DEPTH],
     path_indices: pub [Field; DEPTH],
     root: pub Field,
-) -> pub Field {
+) {
     let hashed_value = calculate_hash(value);
 
     let merkle_tree_root = construct_merkle_tree(hashed_value, path_indices, path_elements);
