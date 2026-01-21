@@ -403,7 +403,19 @@ pub async fn run_simulate() -> Result<()> {
     );
 
     // Print formatted JSON
-    println!("{}", serde_json::to_string_pretty(&simulation_json)?);
+    let json_output = serde_json::to_string_pretty(&simulation_json)?;
+    println!("{}", json_output);
+
+    // Save to .zkproof/report.json
+    let zkproof_dir = std::env::current_dir()?.join(".zkproof");
+    fs::create_dir_all(&zkproof_dir)
+        .with_context(|| format!("Failed to create .zkproof directory: {}", zkproof_dir.display()))?;
+    
+    let report_path = zkproof_dir.join("report.json");
+    fs::write(&report_path, &json_output)
+        .with_context(|| format!("Failed to write report to: {}", report_path.display()))?;
+    
+    println!("\nReport saved to: {}", report_path.display());
 
     Ok(())
 }
