@@ -31,6 +31,16 @@ enum Commands {
     Run {
         path: Option<String>,
     },
+    #[command(name = "generate")]
+    Generate {
+        /// Name of the new Noir project
+        #[arg(short, long)]
+        name: Option<String>,
+        
+        /// Template to use (age_verifier, merkle_inclusion, or none)
+        #[arg(short, long)]
+        template: Option<String>,
+    },
 }
 
 /// Check if the project is initialized, prompting the user if not.
@@ -76,6 +86,11 @@ async fn main() {
                 return;
             }
             if let Err(e) = commands::run_pipeline(path) {
+                eprintln!("❌ Error: {}", e);
+            }
+        }
+        Some(Commands::Generate { name, template }) => {
+            if let Err(e) = commands::run_generate(name, template) {
                 eprintln!("❌ Error: {}", e);
             }
         }
