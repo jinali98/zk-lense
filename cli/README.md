@@ -1,13 +1,17 @@
 # zkprof CLI
 
-A command-line tool for profiling, building, and deploying zero-knowledge proofs built with [Noir](https://noir-lang.org/).
+A command-line tool for profiling, building, and deploying zero-knowledge proofs built with [Noir](https://noir-lang.org/) for Solana Blockchain.
 
 ## Overview
+
+zkprof is developed using Noir and Sunspot to build and deploy zero-knowledge proofs for Solana Blockchain.
 
 zkprof streamlines the ZK development workflow by providing:
 
 - 🚀 **Project scaffolding** with pre-built templates for common ZK patterns
-- 🔧 **Build pipeline** automation (compile, prove, verify, deploy)
+  - Age Verifier
+  - Merkle Inclusion
+- 🔧 **Build pipeline** automation (compile, proof generation, verify, solana deployment)
 - 📊 **Proof simulation** and cost analysis for Solana deployment
 - 🌐 **Interactive viewer** for profiling reports
 
@@ -240,7 +244,7 @@ zkprof run
 # Save the Program ID that's returned
 ```
 
-### 4. Analyze Costs
+### 4. Analyze Performance
 
 ```bash
 # Simulate with your deployed program
@@ -302,5 +306,7 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 ## Related Links
 
 - [Noir Documentation](https://noir-lang.org/docs/)
+- [Sunspot Documentation](https://github.com/reilabs/sunspot)
 - [Solana Documentation](https://docs.solana.com/)
 - [zkprof Web Viewer](https://zkprofile.netlify.app/)
+
