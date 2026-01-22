@@ -10,6 +10,7 @@ A command-line tool for profiling, building, and deploying zero-knowledge proofs
 - [Commands](#commands)
 - [Project Structure](#project-structure)
 - [Workflow Example](#workflow-example)
+- [Metrics Guide](#metrics-guide)
 - [Configuration](#configuration)
 - [Dependencies](#dependencies)
 - [Error Handling](#error-handling)
@@ -268,6 +269,32 @@ zkprof simulate --program-id <YOUR_PROGRAM_ID>
 # View the report
 zkprof view
 ```
+
+## Metrics Guide
+
+zkprof tracks several metrics to help optimize zero-knowledge proofs for Solana deployment. Understanding these metrics and how to interpret them is important for building efficient and cost-effective ZK applications.
+
+### Compute Units
+**What it measures:**
+- total_compute_units_consumed: The actual compute units (CU) used during proof verification
+- compute_budget: The maximum CU limit set for the transaction (default: 500,000)
+- percentage_of_compute_budget_used: Percentage of budget consumed
+
+**What it means:**
+
+Compute units represent the computational resources consumed by your Solana program. Each operation in your circuit consumes a certain amount of CUs.
+
+**How to use it:**
+
+- below 70% usage: ✅ Optimal - You have headroom for future optimizations or additional features
+- 70 to 90% usage: ⚠️ Monitor - Consider optimizing if you plan to add more functionality
+- above 90% usage: 🔴 Critical - Optimize immediately to avoid transaction failures
+
+**What to change:**
+- Simplify circuit logic (reduce constraints, optimize arithmetic operations)
+- Reduce the number of public inputs/outputs
+- Use more efficient data structures in your Noir code
+- Consider splitting complex proofs into multiple smaller proofs
 
 ## Configuration
 
