@@ -2,6 +2,21 @@
 
 A command-line tool for profiling, building, and deploying zero-knowledge proofs built with [Noir](https://noir-lang.org/) for Solana Blockchain.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Commands](#commands)
+- [Project Structure](#project-structure)
+- [Workflow Example](#workflow-example)
+- [Configuration](#configuration)
+- [Dependencies](#dependencies)
+- [Error Handling](#error-handling)
+- [Contributing](#contributing)
+- [License](#license)
+- [Related Links](#related-links)
+
 ## Overview
 
 zkprof is developed using Noir and Sunspot to build and deploy zero-knowledge proofs for Solana Blockchain.
