@@ -296,6 +296,95 @@ Compute units represent the computational resources consumed by your Solana prog
 - Use more efficient data structures in your Noir code
 - Consider splitting complex proofs into multiple smaller proofs
 
+
+### Proof Metrics
+**What it measures:**
+- proof_size: Size of the Groth16 proof in bytes
+- witness_size: Size of the public witness in bytes
+- total_proof_witness_size: Combined size of proof + witness
+- cu_per_proof_size: Compute units consumed per byte of proof+witness data
+
+**What it means:**
+
+Smaller proofs reduce transaction size and costs. The CU per proof size ratio indicates how efficiently your proof is processed.
+
+**How to use it:**
+- small proof size (< 500 bytes): ✅ Good for simple circuits
+- medium proof size (500-1000 bytes): ⚠️ Acceptable, but monitor transaction size limits
+- large proof size (> 1000 bytes): 🔴 May approach Solana's transaction size limits (1232 bytes)
+
+**What to change:**
+- Optimize your circuit to reduce constraint count (fewer constraints = smaller proofs)
+- Minimize public inputs (move data to private inputs when possible)
+- Use more efficient hash functions or cryptographic primitives
+- Consider proof aggregation techniques for multiple proofs
+
+### Cost Metrics
+**What it measures:**
+- base_fee: Fixed transaction fee (5,000 lamports = 0.000005 SOL)
+- prioritization_fee: Optional fee paid for faster transaction confirmation
+- total_fee: Sum of base fee + prioritization fee
+- cost_in_sol: Total cost in SOL
+- cu_price_microlamports: Price per compute unit (in microlamports)
+
+**What it means:**
+
+Transaction costs determine how expensive it is to verify proofs on-chain. Lower costs make your application more accessible.
+
+**How to use it:**
+- no prioritization fee: ⚠️ Transactions may be slower during network congestion
+- low prioritization fee: ✅ Good for most use cases
+- high prioritization fee: 💰 Consider if faster confirmation is critical
+
+**What to change:**
+- Reduce compute units consumed (see Compute Units section)
+- Optimize proof size to reduce transaction size
+- Set appropriate prioritization fees based on network conditions
+- Monitor recent_prioritization_fees in the report to set competitive fees
+
+
+### Transaction Size
+**What it measures:**
+- transaction_size: Total serialized transaction size in bytes
+- message_size: Size of the transaction message (proof + witness + instructions)
+- max_message_size: Solana's maximum message size (1232 bytes)
+- message_within_size: Boolean indicating if transaction fits within limits
+
+**What it means:**
+
+Solana has strict transaction size limits. If your transaction exceeds these limits, it will be rejected.
+
+**How to use it:**
+- below 1000 bytes: ✅ Safe - Plenty of room
+- 1000 to 1200 bytes: ⚠️ Warning - Approaching limit
+- above 1232 bytes: 🔴 Critical - Transaction will fail
+
+**What to change:**
+- Reduce proof size (see Proof Metrics section)
+- Minimize witness size by reducing public inputs
+- Optimize instruction data encoding
+- Consider using instruction data compression techniques
+
+### Transaction Status
+**What it measures:**
+- status: "Success" or "Failed"
+- error: Error message if transaction failed
+- logs: Program execution logs
+
+**What it means:**
+
+Indicates whether your proof verification transaction would succeed on-chain.
+
+**How to use it:**
+- Success: ✅ Your proof verification works correctly
+- Failed: 🔴 Debug the error message and logs to identify issues
+
+**What to change:**
+- Fix circuit logic errors if verification fails
+- Check that proof and witness files are correctly generated
+- Ensure program ID matches your deployed program
+- Review transaction logs for detailed error information
+
 ## Configuration
 
 zkprof stores configuration in `.zkproof/config.toml`:
