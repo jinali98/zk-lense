@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/jinali98/zk-profiling-solana"
 homepage = "https://github.com/jinali98/zk-profiling-solana"
 documentation = "https://github.com/jinali98/zk-profiling-solana#readme"
-keywords = ["zk", "zero-knowledge", "noir", "solana", "blockchain", "proofs", "cli"]
+keywords = ["zk", "zero-knowledge", "noir", "solana", "cli"]
 categories = ["command-line-utilities", "development-tools"]
 readme = "../README.md"
 
