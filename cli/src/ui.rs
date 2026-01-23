@@ -190,11 +190,12 @@ fn draw_top_border(title: &str) -> String {
     } else {
         0
     };
-    format!("┌─ {} {}┐", title, "─".repeat(padding))
+    println!();
+    format!("┌─ {} {}", title, "─".repeat(padding))
 }
 
 fn draw_bottom_border() -> String {
-    format!("└{}┘", "─".repeat(PANEL_WIDTH - 2))
+    format!("└{}─", "─".repeat(PANEL_WIDTH - 2))
 }
 
 fn draw_divider() -> String {
@@ -208,7 +209,7 @@ fn pad_line(content: &str) -> String {
     } else {
         0
     };
-    format!("│  {}{}│", content, " ".repeat(padding))
+    format!("│  {}{}", content, " ".repeat(padding))
 }
 
 /// Print a success panel
