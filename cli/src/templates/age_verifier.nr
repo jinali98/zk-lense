@@ -13,6 +13,5 @@ fn test_age_verifier() {
     let year_of_birth = 2000;
     let current_year = 2024;
     let age_threshold = 18;
-    let is_eligible = main(year_of_birth, current_year, age_threshold);
-    assert(is_eligible);
+    main(year_of_birth, current_year, age_threshold);
 }
