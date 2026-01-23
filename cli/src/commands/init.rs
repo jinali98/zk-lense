@@ -5,6 +5,9 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::fmt;
 use std::str::FromStr;
+use console::style;
+
+use crate::ui::{self, emoji};
 
 const ZKLENSE_DIR: &str = ".zklense";
 const CONFIG_FILE: &str = "config.toml";
@@ -267,19 +270,20 @@ pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
         return Ok(true);
     }
 
-    // Prompt user
-    println!(
-        "⚠️  zklense is not initialized in: {}",
-        base_path.display()
+    // Show warning panel
+    ui::panel_warning(
+        "NOT INITIALIZED",
+        &format!("zklense is not initialized in:\n{}", base_path.display()),
     );
-    print!("Would you like to initialize it now? [y/N]: ");
-    io::stdout().flush()?;
 
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-    let input = input.trim().to_lowercase();
+    // Interactive selection instead of Y/N prompt
+    let should_init = ui::confirm_custom(
+        "Would you like to initialize it now?",
+        &format!("{} Yes, initialize now", emoji::CHECKMARK),
+        &format!("{} No, cancel", emoji::CROSSMARK),
+    )?;
 
-    if input == "y" || input == "yes" {
+    if should_init {
         run_init(Some(base_path.to_string_lossy().to_string()));
         // Check if initialization succeeded
         if is_initialized(&base_path) {
@@ -291,7 +295,7 @@ pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
             ))
         }
     } else {
-        println!("ℹ️  Run 'zklense init' to initialize the project first.");
+        ui::info("Run 'zklense init' to initialize the project first.");
         Ok(false)
     }
 }
@@ -313,14 +317,14 @@ pub fn run_init(path: Option<String>) {
         Some(p) => match resolve_path(&p) {
             Ok(resolved) => resolved,
             Err(e) => {
-                eprintln!("❌ Error resolving path: {}", e);
+                ui::error(&format!("Error resolving path: {}", e));
                 return;
             }
         },
         None => match std::env::current_dir() {
             Ok(cwd) => cwd,
             Err(e) => {
-                eprintln!("❌ Error getting current directory: {}", e);
+                ui::error(&format!("Error getting current directory: {}", e));
                 return;
             }
         },
@@ -328,7 +332,7 @@ pub fn run_init(path: Option<String>) {
 
     // Check if base path exists
     if !base_path.exists() {
-        eprintln!("❌ Path does not exist: {}", base_path.display());
+        ui::error(&format!("Path does not exist: {}", base_path.display()));
         return;
     }
 
@@ -337,61 +341,92 @@ pub fn run_init(path: Option<String>) {
 
     // Check if already initialized
     if zklense_dir.exists() {
-        println!("ℹ️  zklense directory already exists at: {}", zklense_dir.display());
-        
+        ui::info(&format!(
+            "zklense directory already exists at: {}",
+            style(zklense_dir.display()).dim()
+        ));
+
         // Check if config.toml exists, recreate if missing
         if !config_path.exists() {
-            println!("⚠️  Config file missing, recreating...");
+            ui::warn("Config file missing, recreating...");
             let config = ZkLenseConfig::new();
             match config.save(&config_path) {
                 Ok(_) => {
-                    println!("✅ Recreated config file: {}", config_path.display());
-                    println!();
-                    println!("Configuration:");
-                    for (key, value) in &config.settings {
-                        println!("   {} = {}", key, value);
-                    }
+                    ui::success(&format!(
+                        "Recreated config file: {}",
+                        style(config_path.display()).dim()
+                    ));
+                    print_config_summary(&config);
                 }
                 Err(e) => {
-                    eprintln!("❌ Failed to recreate config file: {}", e);
+                    ui::error(&format!("Failed to recreate config file: {}", e));
                 }
             }
         } else {
-            println!("✅ Config file exists at: {}", config_path.display());
+            ui::success(&format!(
+                "Config file exists at: {}",
+                style(config_path.display()).dim()
+            ));
         }
         return;
     }
 
     // Create .zklense directory
+    let spinner = ui::spinner("Creating .zklense directory...");
     match fs::create_dir_all(&zklense_dir) {
         Ok(_) => {
-            println!("✅ Created directory: {}", zklense_dir.display());
+            ui::spinner_success(&spinner, &format!(
+                "Created directory: {}",
+                style(zklense_dir.display()).dim()
+            ));
         }
         Err(e) => {
-            eprintln!("❌ Failed to create directory: {}", e);
+            ui::spinner_error(&spinner, &format!("Failed to create directory: {}", e));
             return;
         }
     }
 
     // Create default config
+    let spinner = ui::spinner("Creating configuration...");
     let config = ZkLenseConfig::new();
     match config.save(&config_path) {
         Ok(_) => {
-            println!("✅ Created config file: {}", config_path.display());
-            println!();
-            println!("🎉 zklense initialized successfully!");
-            println!();
-            println!("Configuration:");
-            for (key, value) in &config.settings {
-                println!("   {} = {}", key, value);
-            }
+            ui::spinner_success(&spinner, &format!(
+                "Created config file: {}",
+                style(config_path.display()).dim()
+            ));
+
+            // Show success panel
+            ui::panel_success(
+                "INITIALIZED",
+                &format!("zklense initialized successfully!\nProject: {}", base_path.display()),
+            );
+
+            // Show configuration summary
+            print_config_summary(&config);
         }
         Err(e) => {
-            eprintln!("❌ Failed to create config file: {}", e);
+            ui::spinner_error(&spinner, &format!("Failed to create config file: {}", e));
             // Clean up the created directory
             let _ = fs::remove_dir(&zklense_dir);
         }
     }
+}
+
+/// Print a formatted configuration summary
+fn print_config_summary(config: &ZkLenseConfig) {
+    ui::section(emoji::GEAR, "Configuration");
+    
+    let network = config.get_solana_network();
+    let items = vec![
+        ("Network", config.get("solana_network").map(|s| s.as_str()).unwrap_or("devnet")),
+        ("RPC URL", config.get("solana_rpc_url").map(|s| s.as_str()).unwrap_or(network.rpc_url())),
+        ("Web App", config.get("web_app_url").map(|s| s.as_str()).unwrap_or(DEFAULT_WEB_APP_URL)),
+        ("Version", config.get("version").map(|s| s.as_str()).unwrap_or("0.1.0")),
+    ];
+    
+    ui::print_tree(&items);
+    ui::blank();
 }
 
 #[cfg(test)]

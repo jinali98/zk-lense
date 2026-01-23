@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 mod commands;
+mod ui;
 
 #[derive(Parser)]
 #[command(name = "zklense", version, about = "ZK Profiling Tool")]

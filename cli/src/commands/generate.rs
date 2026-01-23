@@ -1,11 +1,15 @@
 use anyhow::{Context, Result};
-use dialoguer::{Confirm, Input, Select};
+use console::style;
+use dialoguer::{theme::ColorfulTheme, Input, Select};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+use crate::ui::{self, emoji};
+
 /// Template information with embedded content
 struct Template {
+    name: &'static str,
     display_name: &'static str,
     content: &'static str,
 }
@@ -13,10 +17,12 @@ struct Template {
 /// Available templates (embedded at compile time)
 const TEMPLATES: &[Template] = &[
     Template {
+        name: "age_verifier",
         display_name: "Age Verifier - Verify age threshold based on year of birth",
         content: include_str!("../templates/age_verifier.nr"),
     },
     Template {
+        name: "merkle_inclusion",
         display_name: "Merkle Inclusion Proof - Prove membership in a Merkle tree",
         content: include_str!("../templates/merkle_inclusion.nr"),
     },
@@ -24,25 +30,36 @@ const TEMPLATES: &[Template] = &[
 
 /// Run the generate command
 pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()> {
+    // Header
+    ui::panel_header(
+        emoji::SPARKLES,
+        "CREATE NEW NOIR PROJECT",
+        Some("Generate a new Noir circuit with optional templates"),
+    );
+
     // Get project name
     let project_name = match name {
         Some(n) => n,
         None => {
-            Input::<String>::new()
-                .with_prompt("Enter project name")
+            Input::<String>::with_theme(&ColorfulTheme::default())
+                .with_prompt(format!("{} Project name", emoji::PACKAGE))
                 .interact_text()
                 .context("Failed to read project name")?
         }
     };
     
     if project_name.is_empty() {
+        ui::panel_error("INVALID INPUT", "Project name cannot be empty", None, None);
         return Err(anyhow::anyhow!("Project name cannot be empty"));
     }
-    
+
     // Build template selection options
-    let mut template_options: Vec<&str> = vec!["None - Start with default Noir template"];
+    let mut template_options: Vec<String> = vec![format!(
+        "{} None - Start with default Noir template",
+        emoji::PENDING
+    )];
     for t in TEMPLATES {
-        template_options.push(t.display_name);
+        template_options.push(format!("{} {}", emoji::FILE, t.display_name));
     }
     
     // Get template selection
@@ -54,19 +71,18 @@ pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()
                 None
             } else {
                 TEMPLATES.iter().find(|tmpl| {
-                    // Extract short name from display name (e.g., "Age Verifier" from "Age Verifier - ...")
-                    let short_name = tmpl.display_name.split(" - ").next().unwrap_or("").to_lowercase();
-                    let short_name_snake = short_name.replace(' ', "_");
-                    t_lower == short_name_snake
-                        || short_name.contains(&t_lower)
-                        || tmpl.display_name.to_lowercase().contains(&t_lower)
+                    let short_name = tmpl.name.to_lowercase();
+                    let display_lower = tmpl.display_name.to_lowercase();
+                    t_lower == short_name
+                        || display_lower.contains(&t_lower)
                 })
             }
         }
         None => {
+            ui::blank();
             // Interactive selection
-            let selection = Select::new()
-                .with_prompt("Select a template")
+            let selection = Select::with_theme(&ColorfulTheme::default())
+                .with_prompt(format!("{} Select a template", emoji::FILE))
                 .items(&template_options)
                 .default(0)
                 .interact()
@@ -79,9 +95,11 @@ pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()
             }
         }
     };
+
+    ui::blank();
     
-    // Run nargo new
-    println!("\n📦 Creating new Noir project: {}", project_name);
+    // Run nargo new with spinner
+    let spinner = ui::spinner(&format!("Creating Noir project '{}'...", project_name));
     
     let nargo_output = Command::new("nargo")
         .args(["new", &project_name])
@@ -91,6 +109,15 @@ pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()
     if !nargo_output.status.success() {
         let stderr = String::from_utf8_lossy(&nargo_output.stderr);
         let stdout = String::from_utf8_lossy(&nargo_output.stdout);
+        ui::spinner_error(&spinner, "Failed to create project");
+        
+        ui::panel_error(
+            "NARGO FAILED",
+            "Failed to create new Noir project",
+            Some(&format!("{}\n{}", stdout, stderr)),
+            Some(&["Make sure 'nargo' is installed and in PATH"]),
+        );
+        
         return Err(anyhow::anyhow!(
             "nargo new failed:\n{}\n{}",
             stdout,
@@ -98,38 +125,50 @@ pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()
         ));
     }
     
-    println!("✅ Created Noir project: {}", project_name);
+    ui::spinner_success(&spinner, &format!("Created Noir project: {}", style(&project_name).green().bold()));
     
     // Apply template if selected
     if let Some(tmpl) = selected_template {
         let main_nr_path = Path::new(&project_name).join("src").join("main.nr");
+        let template_name = tmpl.display_name.split(" - ").next().unwrap_or(tmpl.name);
         
-        println!("📝 Applying template: {}", tmpl.display_name.split(" - ").next().unwrap_or(tmpl.display_name));
+        let spinner = ui::spinner(&format!("Applying template: {}...", template_name));
         
         fs::write(&main_nr_path, tmpl.content)
             .with_context(|| format!("Failed to write template to: {}", main_nr_path.display()))?;
         
-        println!("✅ Applied template to src/main.nr");
+        ui::spinner_success(&spinner, &format!(
+            "Applied template: {}",
+            style(template_name).cyan()
+        ));
     }
-    
-    println!("\n🎉 Project '{}' created successfully!", project_name);
+
+    // Success panel
+    ui::panel_success(
+        "PROJECT CREATED",
+        &format!("Noir project '{}' created successfully!", project_name),
+    );
     
     // Ask if user wants to run zklense init
-    let run_init = Confirm::new()
-        .with_prompt("Would you like to initialize zklense in this project?")
-        .default(true)
-        .interact()
-        .unwrap_or(false);
+    let should_init = ui::confirm_custom(
+        "Initialize zklense in this project?",
+        &format!("{} Yes, initialize zklense", emoji::CHECKMARK),
+        &format!("{} No, skip for now", emoji::CROSSMARK),
+    )?;
     
-    if run_init {
+    if should_init {
+        ui::blank();
         let project_path = std::env::current_dir()?.join(&project_name);
         super::run_init(Some(project_path.to_string_lossy().to_string()));
     }
-    
-    println!("\nNext steps:");
-    println!("  cd {}", project_name);
-    println!("  nargo check    # Verify the project compiles");
-    println!("  nargo prove    # Generate a proof");
+
+    // Next steps
+    ui::section(emoji::BULB, "Next Steps");
+    println!();
+    println!("  {} {}", style("1.").dim(), style(format!("cd {}", project_name)).cyan());
+    println!("  {} {}", style("2.").dim(), style("nargo check").cyan().to_string() + &style("    # Verify the project compiles").dim().to_string());
+    println!("  {} {}", style("3.").dim(), style("nargo prove").cyan().to_string() + &style("    # Generate a proof").dim().to_string());
+    ui::blank();
     
     Ok(())
 }
