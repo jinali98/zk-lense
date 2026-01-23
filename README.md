@@ -33,28 +33,22 @@ zklense streamlines the ZK development workflow by providing:
 
 ## Installation
 
+📦 **For detailed installation instructions, see [INSTALL.md](INSTALL.md)**
+
+### Quick Install Options
+
+- **GitHub Releases** (Recommended): Download pre-built binaries from [Releases](https://github.com/jinali98/zk-profiling-solana/releases)
+- **crates.io**: `cargo install zklense` (requires Rust)
+- **Homebrew**: `brew tap gihanrcg/zklense && brew install zklense` (macOS/Linux)
+- **Scoop**: `scoop install zklense` (Windows)
+- **Build from Source**: See [INSTALL.md](INSTALL.md#build-from-source)
+
 ### Prerequisites
 
-- **Rust** (1.70+): [Install Rust](https://rustup.rs/)
+- **Rust** (1.70+): [Install Rust](https://rustup.rs/) - Only needed for building from source
 - **Nargo** (Noir compiler): [Install Noir](https://noir-lang.org/docs/getting_started/installation/)
 - **Sunspot** (optional, for Solana deployment): [Sunspot](https://github.com/solana-foundation/noir-examples)
 - **Solana CLI** (optional, for deployment): [Install Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
-
-### Build from Source
-
-```bash
-cd cli
-cargo build --release
-```
-
-The binary will be available at `target/release/zklense`.
-
-### Add to PATH
-
-```bash
-# Add to your shell profile (.bashrc, .zshrc, etc.)
-export PATH="$PATH:/path/to/zklense/cli/target/release"
-```
 
 ## Quick Start
 

@@ -1,0 +1,24 @@
+{
+  "version": "0.1.0",
+  "description": "A command-line tool for profiling, building, and deploying zero-knowledge proofs built with Noir for Solana Blockchain",
+  "homepage": "https://github.com/jinali98/zk-profiling-solana",
+  "license": "MIT OR Apache-2.0",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.0/zklense-x86_64-pc-windows-msvc.zip",
+      "hash": "REPLACE_WITH_ACTUAL_SHA256"
+    }
+  },
+  "bin": "zklense.exe",
+  "checkver": {
+    "github": "jinali98/zk-profiling-solana",
+    "regex": "tag/v([\\d.]+)"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/jinali98/zk-profiling-solana/releases/download/v$version/zklense-x86_64-pc-windows-msvc.zip"
+      }
+    }
+  }
+}
