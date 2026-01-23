@@ -2,6 +2,19 @@
 name = "zklense"
 version = "0.1.0"
 edition = "2024"
+authors = ["Jinali Pabasara <jinalipabasara@gmail.com>","Nethsara Siyum <nethsarasiyum2@gmail.com>", "Gihan Siriwardhana <gihanrcg1997@gmail.com>", "Nissanka Seneviratne <nyshsolutions@gmail.com>"]
+description = "A command-line tool for profiling, building, and deploying zero-knowledge proofs built with Noir for Solana Blockchain"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jinali98/zk-profiling-solana"
+homepage = "https://github.com/jinali98/zk-profiling-solana"
+documentation = "https://github.com/jinali98/zk-profiling-solana#readme"
+keywords = ["zk", "zero-knowledge", "noir", "solana", "blockchain", "proofs", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+readme = "../README.md"
+
+[[bin]]
+name = "zklense"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
