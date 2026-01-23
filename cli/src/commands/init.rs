@@ -167,11 +167,13 @@ pub fn is_initialized(base_path: &Path) -> bool {
 }
 
 /// Check if the config file exists at the given path
+#[allow(dead_code)]
 pub fn config_exists(base_path: &Path) -> bool {
     get_config_path(base_path).is_file()
 }
 
 /// Read a specific value from the config file
+#[allow(dead_code)]
 pub fn read_config_value(base_path: &Path, key: &str) -> io::Result<Option<String>> {
     let config_path = get_config_path(base_path);
     if !config_path.exists() {
@@ -197,6 +199,7 @@ pub fn read_config(base_path: &Path) -> io::Result<ZkLenseConfig> {
 }
 
 /// Write a value to the config file
+#[allow(dead_code)]
 pub fn write_config_value(base_path: &Path, key: &str, value: &str) -> io::Result<()> {
     let config_path = get_config_path(base_path);
     let mut config = if config_path.exists() {
@@ -299,10 +302,7 @@ pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
         if is_initialized(&base_path) {
             Ok(true)
         } else {
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Initialization failed",
-            ))
+            Err(io::Error::other("Initialization failed"))
         }
     } else {
         ui::info("Run 'zklense init' to initialize the project first.");

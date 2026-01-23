@@ -9,7 +9,7 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::Instant;
 
@@ -27,25 +27,24 @@ fn find_file_by_extension(extension: &str) -> Result<PathBuf> {
     // Search recursively in current directory and subdirectories
     fn search_recursive(dir: &std::path::Path, extension: &str) -> Option<PathBuf> {
         if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path.is_file() {
-                        if let Some(ext) = path.extension() {
-                            if ext == extension {
-                                return Some(path);
-                            }
-                        }
-                    } else if path.is_dir() {
-                        // Skip hidden directories and common build directories that are unlikely to contain proof files
-                        let dir_name = path.file_name().and_then(|n| n.to_str());
-                        if let Some(name) = dir_name {
-                            if !name.starts_with('.') && name != "node_modules" && name != ".git" {
-                                if let Some(found) = search_recursive(&path, extension) {
-                                    return Some(found);
-                                }
-                            }
-                        }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(ext) = path.extension()
+                        && ext == extension
+                    {
+                        return Some(path);
+                    }
+                } else if path.is_dir() {
+                    // Skip hidden directories and common build directories
+                    let dir_name = path.file_name().and_then(|n| n.to_str());
+                    if let Some(name) = dir_name
+                        && !name.starts_with('.')
+                        && name != "node_modules"
+                        && name != ".git"
+                        && let Some(found) = search_recursive(&path, extension)
+                    {
+                        return Some(found);
                     }
                 }
             }
@@ -62,10 +61,11 @@ fn find_file_by_extension(extension: &str) -> Result<PathBuf> {
     let common_dirs = ["target"];
     for subdir in common_dirs {
         let dir_path = current_dir.join(subdir);
-        if dir_path.exists() && dir_path.is_dir() {
-            if let Some(found) = search_recursive(&dir_path, extension) {
-                return Ok(found);
-            }
+        if dir_path.exists()
+            && dir_path.is_dir()
+            && let Some(found) = search_recursive(&dir_path, extension)
+        {
+            return Ok(found);
         }
     }
 
@@ -117,21 +117,20 @@ fn parse_compute_budget_instructions(transaction: &Transaction) -> (u32, u64) {
             .message
             .account_keys
             .get(instruction.program_id_index as usize);
-        if let Some(&pid) = program_id {
-            if pid == compute_budget_program_id {
-                let data = &instruction.data;
-                if data.len() >= 4 {
-                    let instruction_type = data[0];
-                    if instruction_type == 2 && data.len() >= 8 {
-                        // setComputeUnitLimit
-                        cu_limit = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
-                    } else if instruction_type == 3 && data.len() >= 12 {
-                        // setComputeUnitPrice
-                        cu_price = u64::from_le_bytes([
-                            data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-                            data[11],
-                        ]);
-                    }
+        if let Some(&pid) = program_id
+            && pid == compute_budget_program_id
+        {
+            let data = &instruction.data;
+            if data.len() >= 4 {
+                let instruction_type = data[0];
+                if instruction_type == 2 && data.len() >= 8 {
+                    // setComputeUnitLimit
+                    cu_limit = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
+                } else if instruction_type == 3 && data.len() >= 12 {
+                    // setComputeUnitPrice
+                    cu_price = u64::from_le_bytes([
+                        data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11],
+                    ]);
                 }
             }
         }
@@ -330,8 +329,8 @@ fn print_simulation_results(
     transaction: &Transaction,
     proof_size: usize,
     witness_size: usize,
-    proof_path: &PathBuf,
-    witness_path: &PathBuf,
+    proof_path: &Path,
+    witness_path: &Path,
 ) {
     let units_consumed = sim_result.units_consumed.unwrap_or(0);
     let (cu_limit, cu_price_microlamports) = parse_compute_budget_instructions(transaction);

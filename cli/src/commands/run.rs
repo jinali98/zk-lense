@@ -91,14 +91,11 @@ fn run_command_with_spinner(
             }
         }
 
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "Command '{}' failed with exit code: {:?}",
-                cmd,
-                output.status.code()
-            ),
-        ));
+        return Err(io::Error::other(format!(
+            "Command '{}' failed with exit code: {:?}",
+            cmd,
+            output.status.code()
+        )));
     }
 
     ui::spinner_success_with_duration(&spinner, &message.replace("...", ""), duration);
@@ -120,15 +117,12 @@ fn run_command_capture(cmd: &str, args: &[&str], working_dir: &Path) -> io::Resu
             &spinner,
             &format!("Command failed: {} {}", cmd, args.join(" ")),
         );
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "Command '{}' failed with exit code: {:?}\n{}",
-                cmd,
-                output.status.code(),
-                stderr
-            ),
-        ));
+        return Err(io::Error::other(format!(
+            "Command '{}' failed with exit code: {:?}\n{}",
+            cmd,
+            output.status.code(),
+            stderr
+        )));
     }
 
     ui::spinner_success(&spinner, &format!("{} {}", cmd, args.join(" ")));

@@ -8,6 +8,8 @@
 //! - Multi-step progress tracking
 //! - Consistent emoji theme
 
+#![allow(dead_code)]
+
 use comfy_table::{
     Attribute, Cell, Color, ContentArrangement, Table, presets::UTF8_FULL_CONDENSED,
 };
@@ -152,7 +154,7 @@ pub fn confirm(prompt: &str) -> std::io::Result<bool> {
         .items(&items)
         .default(0)
         .interact()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     Ok(selection == 0)
 }
 
@@ -164,7 +166,7 @@ pub fn confirm_custom(prompt: &str, yes_label: &str, no_label: &str) -> std::io:
         .items(&items)
         .default(0)
         .interact()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     Ok(selection == 0)
 }
 
@@ -176,7 +178,7 @@ pub fn select<T: ToString>(prompt: &str, items: &[T], default: usize) -> std::io
         .items(&string_items)
         .default(default)
         .interact()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))
+        .map_err(|e| std::io::Error::other(e.to_string()))
 }
 
 // ============================================================================
