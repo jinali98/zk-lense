@@ -8,9 +8,11 @@
 //! - Multi-step progress tracking
 //! - Consistent emoji theme
 
-use comfy_table::{presets::UTF8_FULL_CONDENSED, Attribute, Cell, Color, ContentArrangement, Table};
-use console::{style, Style};
-use dialoguer::{theme::ColorfulTheme, Select};
+use comfy_table::{
+    Attribute, Cell, Color, ContentArrangement, Table, presets::UTF8_FULL_CONDENSED,
+};
+use console::{Style, style};
+use dialoguer::{Select, theme::ColorfulTheme};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
 
@@ -225,29 +227,37 @@ pub fn panel_success(title: &str, message: &str) {
 }
 
 /// Print an error panel with optional suggestions
-pub fn panel_error(title: &str, message: &str, details: Option<&str>, suggestions: Option<&[&str]>) {
+pub fn panel_error(
+    title: &str,
+    message: &str,
+    details: Option<&str>,
+    suggestions: Option<&[&str]>,
+) {
     let header = format!("{} {}", emoji::CROSSMARK, title);
     println!();
     println!("{}", style(draw_top_border(&header)).red());
     for line in message.lines() {
         println!("{}", style(pad_line(line)).red());
     }
-    
+
     if let Some(detail) = details {
         println!("{}", style(pad_line("")).red());
         for line in detail.lines() {
             println!("{}", style(pad_line(&format!("Details: {}", line))).red());
         }
     }
-    
+
     if let Some(tips) = suggestions {
         println!("{}", style(pad_line("")).red());
-        println!("{}", style(pad_line(&format!("{} Try:", emoji::BULB))).red());
+        println!(
+            "{}",
+            style(pad_line(&format!("{} Try:", emoji::BULB))).red()
+        );
         for tip in tips {
             println!("{}", style(pad_line(&format!("   • {}", tip))).red());
         }
     }
-    
+
     println!("{}", style(draw_bottom_border()).red());
     println!();
 }
@@ -298,13 +308,13 @@ pub fn create_table(headers: &[&str]) -> Table {
     table
         .load_preset(UTF8_FULL_CONDENSED)
         .set_content_arrangement(ContentArrangement::Dynamic);
-    
+
     let header_cells: Vec<Cell> = headers
         .iter()
         .map(|h| Cell::new(h).add_attribute(Attribute::Bold).fg(Color::Cyan))
         .collect();
     table.set_header(header_cells);
-    
+
     table
 }
 
@@ -397,7 +407,7 @@ pub fn print_progress(steps: &[ProgressStep], current_message: Option<&str>) {
     for (i, step) in steps.iter().enumerate() {
         let step_num = i + 1;
         let total = steps.len();
-        
+
         let (icon, name_style) = match step.status {
             StepStatus::Pending => (
                 style(emoji::PENDING).dim().to_string(),
@@ -416,17 +426,17 @@ pub fn print_progress(steps: &[ProgressStep], current_message: Option<&str>) {
                 style(&step.name).red(),
             ),
         };
-        
+
         let duration = step.duration_ms.map_or(String::new(), |d| {
             format!(" {}", style(format!("({}ms)", d)).dim())
         });
-        
+
         let message = if step.status == StepStatus::InProgress {
             current_message.map_or(String::new(), |m| format!(" {}", style(m).dim()))
         } else {
             String::new()
         };
-        
+
         println!(
             "  [{}] {} {}{}{}",
             style(format!("{}/{}", step_num, total)).dim(),
@@ -464,7 +474,11 @@ pub fn blank() {
 
 /// Print a labeled value
 pub fn print_value(label: &str, value: &str) {
-    println!("  {} {}", style(format!("{}:", label)).dim(), style(value).bold());
+    println!(
+        "  {} {}",
+        style(format!("{}:", label)).dim(),
+        style(value).bold()
+    );
 }
 
 /// Print a labeled value with emoji
@@ -484,12 +498,20 @@ pub fn success(message: &str) {
 
 /// Print an error message
 pub fn error(message: &str) {
-    eprintln!("{} {}", style(emoji::ERROR).red().bold(), style(message).red());
+    eprintln!(
+        "{} {}",
+        style(emoji::ERROR).red().bold(),
+        style(message).red()
+    );
 }
 
 /// Print a warning message
 pub fn warn(message: &str) {
-    println!("{} {}", style(emoji::WARNING).yellow().bold(), style(message).yellow());
+    println!(
+        "{} {}",
+        style(emoji::WARNING).yellow().bold(),
+        style(message).yellow()
+    );
 }
 
 /// Print an info message

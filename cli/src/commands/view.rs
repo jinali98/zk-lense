@@ -1,11 +1,11 @@
+use console::style;
 use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::thread;
-use console::style;
 
-use crate::commands::init::{read_config, DEFAULT_WEB_APP_URL};
+use crate::commands::init::{DEFAULT_WEB_APP_URL, read_config};
 
 pub fn run_view(path: Option<String>) {
     // Determine the project directory
@@ -49,21 +49,14 @@ pub fn run_view(path: Option<String>) {
     let report_content = match fs::read_to_string(&report_path) {
         Ok(content) => content,
         Err(e) => {
-            eprintln!(
-                "{} Failed to read report: {}",
-                style("✖").red().bold(),
-                e
-            );
+            eprintln!("{} Failed to read report: {}", style("✖").red().bold(), e);
             std::process::exit(1);
         }
     };
 
     // Validate it's valid JSON
     if serde_json::from_str::<serde_json::Value>(&report_content).is_err() {
-        eprintln!(
-            "{} Report file is not valid JSON",
-            style("✖").red().bold()
-        );
+        eprintln!("{} Report file is not valid JSON", style("✖").red().bold());
         std::process::exit(1);
     }
 
@@ -136,7 +129,7 @@ pub fn run_view(path: Option<String>) {
                     }
 
                     let request = String::from_utf8_lossy(&buffer);
-                    
+
                     // Handle CORS preflight
                     if request.starts_with("OPTIONS") {
                         let response = "HTTP/1.1 204 No Content\r\n\

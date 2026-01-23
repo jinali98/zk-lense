@@ -1,11 +1,11 @@
+use console::style;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::fmt;
 use std::str::FromStr;
-use console::style;
 
 use crate::ui::{self, emoji};
 
@@ -26,7 +26,11 @@ pub enum SolanaNetwork {
 impl SolanaNetwork {
     /// Get all available networks
     pub fn all() -> &'static [SolanaNetwork] {
-        &[SolanaNetwork::Devnet, SolanaNetwork::Testnet, SolanaNetwork::Mainnet]
+        &[
+            SolanaNetwork::Devnet,
+            SolanaNetwork::Testnet,
+            SolanaNetwork::Mainnet,
+        ]
     }
 
     /// Get the RPC URL for this network
@@ -85,8 +89,14 @@ impl ZkLenseConfig {
         settings.insert("version".to_string(), "0.1.0".to_string());
         settings.insert("initialized_at".to_string(), chrono_timestamp());
         settings.insert("web_app_url".to_string(), DEFAULT_WEB_APP_URL.to_string());
-        settings.insert("solana_network".to_string(), default_network.as_str().to_string());
-        settings.insert("solana_rpc_url".to_string(), default_network.rpc_url().to_string());
+        settings.insert(
+            "solana_network".to_string(),
+            default_network.as_str().to_string(),
+        );
+        settings.insert(
+            "solana_rpc_url".to_string(),
+            default_network.rpc_url().to_string(),
+        );
         Self { settings }
     }
 
@@ -375,10 +385,10 @@ pub fn run_init(path: Option<String>) {
     let spinner = ui::spinner("Creating .zklense directory...");
     match fs::create_dir_all(&zklense_dir) {
         Ok(_) => {
-            ui::spinner_success(&spinner, &format!(
-                "Created directory: {}",
-                style(zklense_dir.display()).dim()
-            ));
+            ui::spinner_success(
+                &spinner,
+                &format!("Created directory: {}", style(zklense_dir.display()).dim()),
+            );
         }
         Err(e) => {
             ui::spinner_error(&spinner, &format!("Failed to create directory: {}", e));
@@ -391,15 +401,21 @@ pub fn run_init(path: Option<String>) {
     let config = ZkLenseConfig::new();
     match config.save(&config_path) {
         Ok(_) => {
-            ui::spinner_success(&spinner, &format!(
-                "Created config file: {}",
-                style(config_path.display()).dim()
-            ));
+            ui::spinner_success(
+                &spinner,
+                &format!(
+                    "Created config file: {}",
+                    style(config_path.display()).dim()
+                ),
+            );
 
             // Show success panel
             ui::panel_success(
                 "INITIALIZED",
-                &format!("zklense initialized successfully!\nProject: {}", base_path.display()),
+                &format!(
+                    "zklense initialized successfully!\nProject: {}",
+                    base_path.display()
+                ),
             );
 
             // Show configuration summary
@@ -416,15 +432,36 @@ pub fn run_init(path: Option<String>) {
 /// Print a formatted configuration summary
 fn print_config_summary(config: &ZkLenseConfig) {
     ui::section(emoji::GEAR, "Configuration");
-    
+
     let network = config.get_solana_network();
     let items = vec![
-        ("Network", config.get("solana_network").map(|s| s.as_str()).unwrap_or("devnet")),
-        ("RPC URL", config.get("solana_rpc_url").map(|s| s.as_str()).unwrap_or(network.rpc_url())),
-        ("Web App", config.get("web_app_url").map(|s| s.as_str()).unwrap_or(DEFAULT_WEB_APP_URL)),
-        ("Version", config.get("version").map(|s| s.as_str()).unwrap_or("0.1.0")),
+        (
+            "Network",
+            config
+                .get("solana_network")
+                .map(|s| s.as_str())
+                .unwrap_or("devnet"),
+        ),
+        (
+            "RPC URL",
+            config
+                .get("solana_rpc_url")
+                .map(|s| s.as_str())
+                .unwrap_or(network.rpc_url()),
+        ),
+        (
+            "Web App",
+            config
+                .get("web_app_url")
+                .map(|s| s.as_str())
+                .unwrap_or(DEFAULT_WEB_APP_URL),
+        ),
+        (
+            "Version",
+            config.get("version").map(|s| s.as_str()).unwrap_or("0.1.0"),
+        ),
     ];
-    
+
     ui::print_tree(&items);
     ui::blank();
 }

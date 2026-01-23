@@ -1,21 +1,19 @@
 use anyhow::{Context, Result};
 use console::style;
 use dialoguer::Input;
+use serde_json::json;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_sdk::{
-    instruction::Instruction,
-    native_token::LAMPORTS_PER_SOL,
-    pubkey::Pubkey,
+    instruction::Instruction, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
     transaction::Transaction,
 };
-use serde_json::json;
-use std::str::FromStr;
 use std::fs;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Instant;
 
-use super::init::{get_solana_rpc_url, get_solana_network};
+use super::init::{get_solana_network, get_solana_rpc_url};
 use crate::ui::{self, emoji};
 
 struct ProofResult {
@@ -25,7 +23,7 @@ struct ProofResult {
 
 fn find_file_by_extension(extension: &str) -> Result<PathBuf> {
     let current_dir = std::env::current_dir()?;
-    
+
     // Search recursively in current directory and subdirectories
     fn search_recursive(dir: &std::path::Path, extension: &str) -> Option<PathBuf> {
         if let Ok(entries) = fs::read_dir(dir) {
@@ -54,12 +52,12 @@ fn find_file_by_extension(extension: &str) -> Result<PathBuf> {
         }
         None
     }
-    
+
     // First check current directory
     if let Some(found) = search_recursive(&current_dir, extension) {
         return Ok(found);
     }
-    
+
     // Also check common subdirectories like "target"
     let common_dirs = ["target"];
     for subdir in common_dirs {
@@ -70,27 +68,34 @@ fn find_file_by_extension(extension: &str) -> Result<PathBuf> {
             }
         }
     }
-    
-    Err(anyhow::anyhow!("Could not find file with extension .{}", extension))
+
+    Err(anyhow::anyhow!(
+        "Could not find file with extension .{}",
+        extension
+    ))
 }
 
 fn read_proof_files() -> Result<(ProofResult, PathBuf, PathBuf)> {
     let spinner = ui::spinner("Searching for proof files...");
-    
+
     let proof_path = find_file_by_extension("proof")?;
     let witness_path = find_file_by_extension("pw")?;
-    
+
     ui::spinner_success(&spinner, "Found proof files");
-    
+
     let proof = fs::read(&proof_path)
         .with_context(|| format!("Failed to read proof file: {}", proof_path.display()))?;
     let public_witness = fs::read(&witness_path)
         .with_context(|| format!("Failed to read witness file: {}", witness_path.display()))?;
-    
-    Ok((ProofResult {
-        proof,
-        public_witness,
-    }, proof_path, witness_path))
+
+    Ok((
+        ProofResult {
+            proof,
+            public_witness,
+        },
+        proof_path,
+        witness_path,
+    ))
 }
 
 fn create_instruction_data(proof_result: &ProofResult) -> Vec<u8> {
@@ -102,13 +107,16 @@ fn create_instruction_data(proof_result: &ProofResult) -> Vec<u8> {
 fn parse_compute_budget_instructions(transaction: &Transaction) -> (u32, u64) {
     let mut cu_limit = 200_000u32; // Default CU limit
     let mut cu_price = 0u64; // Default CU price (microlamports per CU)
-    
-    let compute_budget_program_id = Pubkey::from_str("ComputeBudget111111111111111111111111111111")
-        .unwrap();
-    
+
+    let compute_budget_program_id =
+        Pubkey::from_str("ComputeBudget111111111111111111111111111111").unwrap();
+
     for instruction in &transaction.message.instructions {
         // Get program_id from account_keys using program_id_index
-        let program_id = transaction.message.account_keys.get(instruction.program_id_index as usize);
+        let program_id = transaction
+            .message
+            .account_keys
+            .get(instruction.program_id_index as usize);
         if let Some(&pid) = program_id {
             if pid == compute_budget_program_id {
                 let data = &instruction.data;
@@ -116,21 +124,19 @@ fn parse_compute_budget_instructions(transaction: &Transaction) -> (u32, u64) {
                     let instruction_type = data[0];
                     if instruction_type == 2 && data.len() >= 8 {
                         // setComputeUnitLimit
-                        cu_limit = u32::from_le_bytes([
-                            data[4], data[5], data[6], data[7]
-                        ]);
+                        cu_limit = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
                     } else if instruction_type == 3 && data.len() >= 12 {
                         // setComputeUnitPrice
                         cu_price = u64::from_le_bytes([
-                            data[4], data[5], data[6], data[7],
-                            data[8], data[9], data[10], data[11],
+                            data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+                            data[11],
                         ]);
                     }
                 }
             }
         }
     }
-    
+
     (cu_limit, cu_price)
 }
 
@@ -143,7 +149,7 @@ fn create_simulation_json(
 ) -> serde_json::Value {
     // Extract compute units
     let units_consumed = sim_result.units_consumed.unwrap_or(0);
-    
+
     // Parse compute budget instructions
     let (cu_limit, cu_price_microlamports) = parse_compute_budget_instructions(transaction);
     let compute_budget = cu_limit as u64;
@@ -155,14 +161,18 @@ fn create_simulation_json(
 
     // Extract transaction details
     let transaction_size = bincode::serialize(transaction).unwrap_or_default().len();
-    let message_size = bincode::serialize(&transaction.message).unwrap_or_default().len();
+    let message_size = bincode::serialize(&transaction.message)
+        .unwrap_or_default()
+        .len();
     let max_message_size = 1232; // Solana max transaction size
     let message_within_size = message_size <= max_message_size;
-    
+
     // Extract logs
-    let logs = sim_result.logs.as_ref().map(|l| {
-        l.iter().map(|s| s.as_str()).collect::<Vec<_>>()
-    }).unwrap_or_default();
+    let logs = sim_result
+        .logs
+        .as_ref()
+        .map(|l| l.iter().map(|s| s.as_str()).collect::<Vec<_>>())
+        .unwrap_or_default();
 
     // Extract error if any
     let transaction_status = if sim_result.err.is_some() {
@@ -181,12 +191,12 @@ fn create_simulation_json(
 
     // Fee calculations
     let base_fee = 5000u64; // Base fee in lamports
-    
+
     // Calculate prioritization fee (convert from microlamports to lamports)
     let prioritization_fee_lamports = (cu_limit as u64 * cu_price_microlamports) / 1_000_000;
     let total_fee = base_fee + prioritization_fee_lamports;
     let cost_in_sol = total_fee as f64 / LAMPORTS_PER_SOL as f64;
-    
+
     // Calculate write lock CUs
     let header = &transaction.message.header;
     let total_accounts = transaction.message.account_keys.len();
@@ -197,7 +207,7 @@ fn create_simulation_json(
         .saturating_sub(header.num_readonly_unsigned_accounts as usize);
     let write_lock_cus = writable_signed + writable_unsigned;
     let signature_cus = 0u64;
-    
+
     // Calculate priority
     let priority_numerator = prioritization_fee_lamports + base_fee;
     let priority_denominator = 1 + compute_budget + signature_cus + write_lock_cus as u64;
@@ -217,7 +227,10 @@ fn create_simulation_json(
     };
 
     let size_suggestion = if !message_within_size {
-        format!("Transaction size ({}) exceeds maximum ({})", message_size, max_message_size)
+        format!(
+            "Transaction size ({}) exceeds maximum ({})",
+            message_size, max_message_size
+        )
     } else {
         format!("Transaction size ({}) is within limits", message_size)
     };
@@ -329,10 +342,12 @@ fn print_simulation_results(
         0.0
     };
 
-    let message_size = bincode::serialize(&transaction.message).unwrap_or_default().len();
+    let message_size = bincode::serialize(&transaction.message)
+        .unwrap_or_default()
+        .len();
     let max_message_size = 1232;
     let message_within_size = message_size <= max_message_size;
-    
+
     let is_success = sim_result.err.is_none();
     let total_proof_witness_size = proof_size + witness_size;
 
@@ -345,17 +360,44 @@ fn print_simulation_results(
     // Compute Units Section
     ui::section(emoji::LIGHTNING, "Compute Units");
     ui::print_tree_with_status(&[
-        ("Consumed", &format!("{:>12} CU", format_number(units_consumed)), true),
-        ("Budget", &format!("{:>12} CU", format_number(compute_budget)), true),
-        ("Usage", &format!("{:>11.2}%", compute_budget_percentage), compute_budget_percentage <= 90.0),
+        (
+            "Consumed",
+            &format!("{:>12} CU", format_number(units_consumed)),
+            true,
+        ),
+        (
+            "Budget",
+            &format!("{:>12} CU", format_number(compute_budget)),
+            true,
+        ),
+        (
+            "Usage",
+            &format!("{:>11.2}%", compute_budget_percentage),
+            compute_budget_percentage <= 90.0,
+        ),
     ]);
 
     // Transaction Status Section
-    ui::section(if is_success { emoji::CHECKMARK } else { emoji::CROSSMARK }, "Transaction Status");
+    ui::section(
+        if is_success {
+            emoji::CHECKMARK
+        } else {
+            emoji::CROSSMARK
+        },
+        "Transaction Status",
+    );
     if is_success {
-        println!("  {} {}", emoji::SUCCESS, style("Simulation Successful").green().bold());
+        println!(
+            "  {} {}",
+            emoji::SUCCESS,
+            style("Simulation Successful").green().bold()
+        );
     } else {
-        println!("  {} {}", emoji::ERROR, style("Simulation Failed").red().bold());
+        println!(
+            "  {} {}",
+            emoji::ERROR,
+            style("Simulation Failed").red().bold()
+        );
         if let Some(err) = &sim_result.err {
             println!("  {} Error: {:?}", emoji::TREE_END, style(err).red());
         }
@@ -364,23 +406,50 @@ fn print_simulation_results(
     // Transaction Size Section
     ui::section(emoji::FILE, "Transaction Size");
     ui::print_tree_with_status(&[
-        ("Message Size", &format!("{} bytes", message_size), message_within_size),
+        (
+            "Message Size",
+            &format!("{} bytes", message_size),
+            message_within_size,
+        ),
         ("Max Size", &format!("{} bytes", max_message_size), true),
     ]);
 
     // Cost Estimate Section
     ui::section(emoji::MONEY, "Cost Estimate");
     ui::print_tree(&[
-        ("Base Fee", &format!("{:.9} SOL", base_fee as f64 / LAMPORTS_PER_SOL as f64)),
-        ("Priority Fee", &format!("{:.9} SOL", prioritization_fee_lamports as f64 / LAMPORTS_PER_SOL as f64)),
+        (
+            "Base Fee",
+            &format!("{:.9} SOL", base_fee as f64 / LAMPORTS_PER_SOL as f64),
+        ),
+        (
+            "Priority Fee",
+            &format!(
+                "{:.9} SOL",
+                prioritization_fee_lamports as f64 / LAMPORTS_PER_SOL as f64
+            ),
+        ),
         ("Total", &format!("{:.9} SOL", cost_in_sol)),
     ]);
 
     // Proof Files Section
     ui::section(emoji::FILE, "Proof Files");
     ui::print_tree(&[
-        ("Proof", &format!("{} bytes ({})", proof_size, style(proof_path.display()).dim())),
-        ("Witness", &format!("{} bytes ({})", witness_size, style(witness_path.display()).dim())),
+        (
+            "Proof",
+            &format!(
+                "{} bytes ({})",
+                proof_size,
+                style(proof_path.display()).dim()
+            ),
+        ),
+        (
+            "Witness",
+            &format!(
+                "{} bytes ({})",
+                witness_size,
+                style(witness_path.display()).dim()
+            ),
+        ),
         ("Total", &format!("{} bytes", total_proof_witness_size)),
     ]);
 
@@ -402,31 +471,33 @@ fn format_number(n: u64) -> String {
 
 pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     // Header
-    ui::panel_header(emoji::CHART, "TRANSACTION SIMULATION", Some("Simulate ZK proof verification on Solana"));
+    ui::panel_header(
+        emoji::CHART,
+        "TRANSACTION SIMULATION",
+        Some("Simulate ZK proof verification on Solana"),
+    );
 
     // Get program ID from argument or prompt user
     let program_id_str = match program_id_arg {
         Some(id) => id,
-        None => {
-            Input::<String>::new()
-                .with_prompt(format!("{} Enter Solana program ID", emoji::PIN))
-                .interact_text()
-                .context("Failed to read program ID")?
-        }
+        None => Input::<String>::new()
+            .with_prompt(format!("{} Enter Solana program ID", emoji::PIN))
+            .interact_text()
+            .context("Failed to read program ID")?,
     };
-    
+
     if program_id_str.is_empty() {
         ui::panel_error("INVALID INPUT", "Program ID cannot be empty", None, None);
         return Err(anyhow::anyhow!("Program ID cannot be empty"));
     }
 
     ui::blank();
-    
+
     // Read proof and witness files (automatically found by extension)
     let (proof_result, proof_path, witness_path) = read_proof_files()?;
     let proof_size = proof_result.proof.len();
     let witness_size = proof_result.public_witness.len();
-    
+
     // Create instruction data by concatenating proof + witness
     let instruction_data = create_instruction_data(&proof_result);
 
@@ -439,16 +510,17 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
 
     // Connect to Solana
     let start = Instant::now();
-    let spinner = ui::spinner(&format!("Connecting to {} ({})...", network, style(&rpc_url).dim()));
-    
-    let connection = RpcClient::new_with_commitment(
-        rpc_url.clone(),
-        CommitmentConfig::confirmed(),
-    );
+    let spinner = ui::spinner(&format!(
+        "Connecting to {} ({})...",
+        network,
+        style(&rpc_url).dim()
+    ));
+
+    let connection = RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
 
     // Parse program ID
     let program_id = Pubkey::from_str(&program_id_str)?;
-    
+
     // Create a keypair for the fee payer (can be loaded from file or generated)
     // For simulation, we can use a dummy keypair
     let fee_payer = Pubkey::from_str("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM")?;
@@ -461,46 +533,46 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     };
 
     // Create compute budget instruction manually
-    let compute_budget_program_id = Pubkey::from_str("ComputeBudget111111111111111111111111111111")?;
+    let compute_budget_program_id =
+        Pubkey::from_str("ComputeBudget111111111111111111111111111111")?;
     let compute_units = 500_000u32;
-    
+
     let mut compute_unit_limit_data = vec![2u8, 0, 0, 0];
     compute_unit_limit_data.extend_from_slice(&compute_units.to_le_bytes());
-    
+
     let compute_unit_limit_ix = Instruction {
         program_id: compute_budget_program_id,
         accounts: vec![],
         data: compute_unit_limit_data,
     };
-    
+
     // Build transaction with compute budget and verify instructions
     let mut transaction = Transaction::new_with_payer(
         &[compute_unit_limit_ix, verify_instruction],
         Some(&fee_payer),
     );
-    
+
     // Get blockhash
     let blockhash = connection.get_latest_blockhash().await?;
     transaction.message.recent_blockhash = blockhash;
-    
-    ui::spinner_success_with_duration(&spinner, &format!("Connected to {}", network), start.elapsed().as_millis());
+
+    ui::spinner_success_with_duration(
+        &spinner,
+        &format!("Connected to {}", network),
+        start.elapsed().as_millis(),
+    );
 
     // Simulate the transaction
     let start = Instant::now();
     let spinner = ui::spinner("Simulating transaction...");
-    
-    let sim_response = connection
-        .simulate_transaction(&transaction)
-        .await?;
-    
+
+    let sim_response = connection.simulate_transaction(&transaction).await?;
+
     ui::spinner_success_with_duration(&spinner, "Simulation complete", start.elapsed().as_millis());
 
     // Fetch recent prioritization fees (non-blocking, with warning on failure)
     let spinner = ui::spinner("Fetching prioritization fees...");
-    let recent_prioritization_fees = match connection
-        .get_recent_prioritization_fees(&[])
-        .await
-    {
+    let recent_prioritization_fees = match connection.get_recent_prioritization_fees(&[]).await {
         Ok(fees_vec) => {
             let fees: Vec<serde_json::Value> = fees_vec
                 .iter()
@@ -548,29 +620,41 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     // Save to .zklense/report.json
     let spinner = ui::spinner("Saving report...");
     let zklense_dir = std::env::current_dir()?.join(".zklense");
-    fs::create_dir_all(&zklense_dir)
-        .with_context(|| format!("Failed to create .zklense directory: {}", zklense_dir.display()))?;
+    fs::create_dir_all(&zklense_dir).with_context(|| {
+        format!(
+            "Failed to create .zklense directory: {}",
+            zklense_dir.display()
+        )
+    })?;
 
     let report_path = zklense_dir.join("report.json");
     fs::write(&report_path, &json_output)
         .with_context(|| format!("Failed to write report to: {}", report_path.display()))?;
-    
-    ui::spinner_success(&spinner, &format!("Report saved to {}", style(report_path.display()).dim()));
+
+    ui::spinner_success(
+        &spinner,
+        &format!("Report saved to {}", style(report_path.display()).dim()),
+    );
 
     // Success panel
     let is_success = sim_response.value.err.is_none();
     if is_success {
         ui::panel_success(
             "SIMULATION COMPLETE",
-            &format!("Transaction simulation was successful!\n\nView full report: {}", report_path.display()),
+            &format!(
+                "Transaction simulation was successful!\n\nView full report: {}",
+                report_path.display()
+            ),
         );
     } else {
         ui::panel_warning(
             "SIMULATION COMPLETE (WITH ERRORS)",
-            &format!("Transaction simulation completed with errors.\n\nView full report: {}", report_path.display()),
+            &format!(
+                "Transaction simulation completed with errors.\n\nView full report: {}",
+                report_path.display()
+            ),
         );
     }
 
     Ok(())
 }
-

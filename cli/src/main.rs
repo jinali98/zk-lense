@@ -37,7 +37,7 @@ enum Commands {
         /// Name of the new Noir project
         #[arg(short, long)]
         name: Option<String>,
-        
+
         /// Template to use (age_verifier, merkle_inclusion, or none)
         #[arg(short, long)]
         template: Option<String>,
@@ -54,14 +54,10 @@ enum Commands {
 enum ConfigCommands {
     /// Show all configuration values
     #[command(name = "show")]
-    Show {
-        path: Option<String>,
-    },
+    Show { path: Option<String> },
     /// Get the current Solana network
     #[command(name = "get-network")]
-    GetNetwork {
-        path: Option<String>,
-    },
+    GetNetwork { path: Option<String> },
     /// Set the Solana network (devnet, testnet, or mainnet)
     #[command(name = "set-network")]
     SetNetwork {
@@ -71,14 +67,10 @@ enum ConfigCommands {
     },
     /// List all available Solana networks
     #[command(name = "list-networks")]
-    ListNetworks {
-        path: Option<String>,
-    },
+    ListNetworks { path: Option<String> },
     /// Get the current Solana RPC URL
     #[command(name = "get-rpc")]
-    GetRpc {
-        path: Option<String>,
-    },
+    GetRpc { path: Option<String> },
     /// Set a custom Solana RPC URL
     #[command(name = "set-rpc")]
     SetRpc {
@@ -88,9 +80,7 @@ enum ConfigCommands {
     },
     /// Reset the RPC URL to the default for the current network
     #[command(name = "reset-rpc")]
-    ResetRpc {
-        path: Option<String>,
-    },
+    ResetRpc { path: Option<String> },
 }
 
 /// Check if the project is initialized, prompting the user if not.
@@ -189,7 +179,7 @@ async fn main() {
                     (commands::ConfigAction::ResetRpc, path)
                 }
             };
-            
+
             if let Err(e) = commands::run_config(config_action, path) {
                 eprintln!("❌ Error: {}", e);
             }

@@ -40,7 +40,7 @@ fn command_exists(cmd: &str) -> bool {
 /// Read and parse Nargo.toml to get the circuit name
 fn read_circuit_name(base_path: &Path) -> io::Result<String> {
     let nargo_path = base_path.join(NARGO_TOML);
-    
+
     if !nargo_path.exists() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
@@ -71,7 +71,7 @@ fn run_command_with_spinner(
 ) -> io::Result<u128> {
     let spinner = ui::spinner(message);
     let start = Instant::now();
-    
+
     let output = Command::new(cmd)
         .args(args)
         .current_dir(working_dir)
@@ -82,7 +82,7 @@ fn run_command_with_spinner(
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         ui::spinner_error(&spinner, &format!("Failed: {} {}", cmd, args.join(" ")));
-        
+
         // Print stderr if available
         if !stderr.is_empty() {
             ui::blank();
@@ -90,7 +90,7 @@ fn run_command_with_spinner(
                 println!("    {}", style(line).red().dim());
             }
         }
-        
+
         return Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
@@ -108,7 +108,7 @@ fn run_command_with_spinner(
 /// Run a command and capture its output
 fn run_command_capture(cmd: &str, args: &[&str], working_dir: &Path) -> io::Result<String> {
     let spinner = ui::spinner(&format!("Running {} {}...", cmd, args.join(" ")));
-    
+
     let output = Command::new(cmd)
         .args(args)
         .current_dir(working_dir)
@@ -116,7 +116,10 @@ fn run_command_capture(cmd: &str, args: &[&str], working_dir: &Path) -> io::Resu
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        ui::spinner_error(&spinner, &format!("Command failed: {} {}", cmd, args.join(" ")));
+        ui::spinner_error(
+            &spinner,
+            &format!("Command failed: {} {}", cmd, args.join(" ")),
+        );
         return Err(io::Error::new(
             io::ErrorKind::Other,
             format!(
@@ -230,9 +233,10 @@ fn check_prerequisites() -> io::Result<()> {
 
     if !missing.is_empty() {
         let mut suggestions = Vec::new();
-        
+
         if missing.contains(&"nargo") {
-            suggestions.push("Install nargo: https://noir-lang.org/docs/getting_started/installation");
+            suggestions
+                .push("Install nargo: https://noir-lang.org/docs/getting_started/installation");
         }
         if missing.contains(&"sunspot") {
             suggestions.push("Install sunspot: https://github.com/pablodeymo/sunspot");
@@ -289,7 +293,11 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
     ui::panel_header(
         emoji::ROCKET,
         "NOIR BUILD PIPELINE",
-        Some(&format!("Circuit: {} | Path: {}", circuit_name, base_path.display())),
+        Some(&format!(
+            "Circuit: {} | Path: {}",
+            circuit_name,
+            base_path.display()
+        )),
     );
 
     // Check prerequisites
@@ -303,8 +311,11 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
     let total_steps = steps.len();
 
     // Print pipeline overview
-    ui::section(emoji::PIN, &format!("Build Pipeline ({} steps)", total_steps));
-    
+    ui::section(
+        emoji::PIN,
+        &format!("Build Pipeline ({} steps)", total_steps),
+    );
+
     for (i, step) in steps.iter().enumerate() {
         println!(
             "  {} [{}] {}",
@@ -321,7 +332,7 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
 
     for (i, step) in steps.iter().enumerate() {
         let step_num = i + 1;
-        
+
         let working_dir = if step.working_dir_is_target {
             // For sunspot commands, check that target dir exists
             if !target_dir.exists() {
@@ -347,10 +358,7 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
         let args_vec = (step.args_fn)(&circuit_name);
         let args: Vec<&str> = args_vec.iter().map(|s| s.as_str()).collect();
 
-        let step_message = format!(
-            "[{}/{}] {}...",
-            step_num, total_steps, step.description
-        );
+        let step_message = format!("[{}/{}] {}...", step_num, total_steps, step.description);
 
         let duration = run_command_with_spinner(step.command, &args, &working_dir, &step_message)?;
         step_durations.push((step.name, duration));
@@ -371,14 +379,14 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
 
     // Generated files section
     ui::section(emoji::FOLDER, "Generated Files");
-    
+
     let file_ccs = format!("{}.ccs", circuit_name);
     let file_pk = format!("{}.pk", circuit_name);
     let file_vk = format!("{}.vk", circuit_name);
     let file_proof = format!("{}.proof", circuit_name);
     let file_pw = format!("{}.pw", circuit_name);
     let file_so = format!("{}.so", circuit_name);
-    
+
     let files: Vec<(&str, &str)> = vec![
         (&file_ccs, "Compiled circuit"),
         (&file_pk, "Proving key"),
@@ -387,11 +395,15 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
         (&file_pw, "Public witness"),
         (&file_so, "Solana program"),
     ];
-    
+
     for (file, desc) in &files {
         let file_path = target_dir.join(file);
         let exists = file_path.exists();
-        let icon = if exists { emoji::SUCCESS } else { emoji::PENDING };
+        let icon = if exists {
+            emoji::SUCCESS
+        } else {
+            emoji::PENDING
+        };
         let file_style = if exists {
             style(*file).green().to_string()
         } else {
@@ -403,7 +415,7 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
 
     // Prompt user to deploy the Solana program
     let program_path = target_dir.join(format!("{}.so", circuit_name));
-    
+
     if program_path.exists() {
         ui::section(emoji::ROCKET, "Solana Program Deployment");
         println!(
@@ -422,7 +434,7 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
 
         if should_deploy {
             ui::blank();
-            
+
             // Check if solana CLI exists
             if !command_exists("solana") {
                 ui::panel_error(
@@ -436,13 +448,13 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
                     "Solana CLI not found",
                 ));
             }
-            
+
             let output = run_command_capture(
                 "solana",
                 &["program", "deploy", program_path.to_str().unwrap()],
                 &target_dir,
             )?;
-            
+
             // Parse Program ID from output (format: "Program Id: <address>")
             let program_id = output
                 .lines()
@@ -450,11 +462,14 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
                 .and_then(|line| line.split(':').nth(1))
                 .map(|id| id.trim())
                 .unwrap_or("Unknown");
-            
+
             ui::blank();
             ui::panel_success(
                 "DEPLOYED",
-                &format!("Solana program deployed successfully!\n\nProgram ID:\n{}", program_id),
+                &format!(
+                    "Solana program deployed successfully!\n\nProgram ID:\n{}",
+                    program_id
+                ),
             );
         } else {
             ui::info("Deployment skipped. You can deploy later with:");

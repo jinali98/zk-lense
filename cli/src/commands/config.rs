@@ -1,10 +1,9 @@
-use std::io;
 use console::style;
+use std::io;
 
 use super::init::{
-    get_solana_network, get_solana_rpc_url, read_config, reset_solana_rpc_url,
-    resolve_project_path, set_solana_network, set_solana_rpc_url, SolanaNetwork,
-    DEFAULT_WEB_APP_URL,
+    DEFAULT_WEB_APP_URL, SolanaNetwork, get_solana_network, get_solana_rpc_url, read_config,
+    reset_solana_rpc_url, resolve_project_path, set_solana_network, set_solana_rpc_url,
 };
 use crate::ui::{self, emoji};
 
@@ -20,20 +19,28 @@ pub fn run_config_show(path: Option<String>) -> io::Result<()> {
 
     // Create a formatted table
     let mut table = ui::create_kv_table();
-    
+
     ui::add_kv_row(&mut table, emoji::GLOBE, "Network", network.as_str());
     ui::add_kv_row(&mut table, emoji::LINK, "RPC URL", &rpc_url);
-    
+
     // Show if RPC is custom
     if rpc_url != network.rpc_url() {
-        ui::add_kv_row(&mut table, "", "(Custom)", &format!("default is {}", network.rpc_url()));
+        ui::add_kv_row(
+            &mut table,
+            "",
+            "(Custom)",
+            &format!("default is {}", network.rpc_url()),
+        );
     }
-    
+
     ui::add_kv_row(
         &mut table,
         emoji::GLOBE,
         "Web App",
-        config.get("web_app_url").map(|s| s.as_str()).unwrap_or(DEFAULT_WEB_APP_URL),
+        config
+            .get("web_app_url")
+            .map(|s| s.as_str())
+            .unwrap_or(DEFAULT_WEB_APP_URL),
     );
     ui::add_kv_row(
         &mut table,
@@ -55,11 +62,8 @@ pub fn run_config_get_network(path: Option<String>) -> io::Result<()> {
     let rpc_url = get_solana_rpc_url(&base_path)?;
 
     ui::section(emoji::GLOBE, "Current Solana Network");
-    
-    let items = vec![
-        ("Network", network.as_str()),
-        ("RPC URL", &rpc_url),
-    ];
+
+    let items = vec![("Network", network.as_str()), ("RPC URL", &rpc_url)];
     ui::print_tree(&items);
     ui::blank();
 
@@ -70,25 +74,31 @@ pub fn run_config_get_network(path: Option<String>) -> io::Result<()> {
 pub fn run_config_set_network(network_str: &str, path: Option<String>) -> io::Result<()> {
     let base_path = resolve_project_path(path.as_deref())?;
 
-    let network: SolanaNetwork = network_str.parse().map_err(|e: String| {
-        io::Error::new(io::ErrorKind::InvalidInput, e)
-    })?;
+    let network: SolanaNetwork = network_str
+        .parse()
+        .map_err(|e: String| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 
     let old_network = get_solana_network(&base_path)?;
 
     if old_network == network {
-        ui::info(&format!("Solana network is already set to: {}", style(network).bold()));
+        ui::info(&format!(
+            "Solana network is already set to: {}",
+            style(network).bold()
+        ));
         return Ok(());
     }
 
     let spinner = ui::spinner(&format!("Switching to {}...", network));
     set_solana_network(&base_path, network)?;
-    ui::spinner_success(&spinner, &format!(
-        "Network changed: {} {} {}",
-        style(old_network).dim(),
-        emoji::ARROW_RIGHT,
-        style(network).green().bold()
-    ));
+    ui::spinner_success(
+        &spinner,
+        &format!(
+            "Network changed: {} {} {}",
+            style(old_network).dim(),
+            emoji::ARROW_RIGHT,
+            style(network).green().bold()
+        ),
+    );
 
     ui::blank();
     ui::print_value_with_emoji(emoji::LINK, "RPC URL", network.rpc_url());
@@ -107,19 +117,23 @@ pub fn run_config_list_networks(path: Option<String>) -> io::Result<()> {
 
     for network in SolanaNetwork::all() {
         let is_current = *network == current;
-        let marker = if is_current { emoji::ACTIVE } else { emoji::PENDING };
+        let marker = if is_current {
+            emoji::ACTIVE
+        } else {
+            emoji::PENDING
+        };
         let name = if is_current {
             style(network.as_str()).green().bold().to_string()
         } else {
             style(network.as_str()).dim().to_string()
         };
         let url = style(network.rpc_url()).dim();
-        
+
         println!("  {} {:<12} {}", marker, name, url);
     }
 
     ui::blank();
-    
+
     // Show current RPC URL
     let is_custom = current_rpc != current.rpc_url();
     if is_custom {
@@ -140,8 +154,14 @@ pub fn run_config_list_networks(path: Option<String>) -> io::Result<()> {
 
     ui::blank();
     println!("  {} {}", emoji::BULB, style("Commands:").dim());
-    println!("     {} Switch network", style("zklense config set-network <network>").cyan());
-    println!("     {} Custom RPC", style("zklense config set-rpc <url>").cyan());
+    println!(
+        "     {} Switch network",
+        style("zklense config set-network <network>").cyan()
+    );
+    println!(
+        "     {} Custom RPC",
+        style("zklense config set-rpc <url>").cyan()
+    );
     ui::blank();
 
     Ok(())
@@ -156,7 +176,7 @@ pub fn run_config_get_rpc(path: Option<String>) -> io::Result<()> {
     ui::section(emoji::LINK, "Current Solana RPC");
 
     let is_custom = rpc_url != network.rpc_url();
-    
+
     let items: Vec<(&str, &str)> = if is_custom {
         vec![
             ("RPC URL", &rpc_url),
@@ -164,14 +184,11 @@ pub fn run_config_get_rpc(path: Option<String>) -> io::Result<()> {
             ("Status", "Custom RPC"),
         ]
     } else {
-        vec![
-            ("RPC URL", &rpc_url),
-            ("Network", network.as_str()),
-        ]
+        vec![("RPC URL", &rpc_url), ("Network", network.as_str())]
     };
-    
+
     ui::print_tree(&items);
-    
+
     if is_custom {
         ui::blank();
         println!(
@@ -181,7 +198,7 @@ pub fn run_config_get_rpc(path: Option<String>) -> io::Result<()> {
             style(network.rpc_url()).dim()
         );
     }
-    
+
     ui::blank();
 
     Ok(())
@@ -208,7 +225,10 @@ pub fn run_config_set_rpc(rpc_url: &str, path: Option<String>) -> io::Result<()>
     let old_rpc = get_solana_rpc_url(&base_path)?;
 
     if old_rpc == rpc_url {
-        ui::info(&format!("RPC URL is already set to: {}", style(rpc_url).bold()));
+        ui::info(&format!(
+            "RPC URL is already set to: {}",
+            style(rpc_url).bold()
+        ));
         return Ok(());
     }
 
