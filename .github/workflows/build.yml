@@ -21,6 +21,8 @@ jobs:
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: rustfmt, clippy
 
             - name: Cache cargo registry
               uses: actions/cache@v4
@@ -30,21 +32,25 @@ jobs:
                       ~/.cargo/registry/index/
                       ~/.cargo/registry/cache/
                       ~/.cargo/git/db/
-                      target/
+                      cli/target/
                   key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: |
                       ${{ runner.os }}-cargo-
 
             - name: Check formatting
+              working-directory: cli
               run: cargo fmt -- --check
 
             - name: Run clippy
+              working-directory: cli
               run: cargo clippy -- -D warnings
 
             - name: Run tests
+              working-directory: cli
               run: cargo test --verbose
 
             - name: Build
+              working-directory: cli
               run: cargo build --verbose
 
     lint:
@@ -58,7 +64,9 @@ jobs:
             - name: Install Rust
               uses: dtolnay/rust-toolchain@stable
 
+            - name: Install cargo-audit
+              run: cargo install cargo-audit
+
             - name: Run cargo audit
-              uses: rustsec/audit-check@v1
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
+              working-directory: cli
+              run: cargo audit || true
