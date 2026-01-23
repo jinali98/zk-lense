@@ -20,7 +20,7 @@ pub fn run_view(path: Option<String>) {
                     e
                 );
                 eprintln!(
-                    "  {} Try specifying a path: zkprof view /path/to/project",
+                    "  {} Try specifying a path: zklense view /path/to/project",
                     style("→").dim()
                 );
                 std::process::exit(1);
@@ -28,8 +28,8 @@ pub fn run_view(path: Option<String>) {
         },
     };
 
-    let zkproof_dir = project_dir.join(".zkproof");
-    let report_path = zkproof_dir.join("report.json");
+    let zklense_dir = project_dir.join(".zklense");
+    let report_path = zklense_dir.join("report.json");
 
     // Check if report.json exists
     if !report_path.exists() {

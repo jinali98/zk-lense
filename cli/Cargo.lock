@@ -6072,7 +6072,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "zkprof"
+name = "zklense"
 version = "0.1.0"
 dependencies = [
  "anyhow",

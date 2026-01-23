@@ -12,6 +12,8 @@ use std::str::FromStr;
 use std::fs;
 use std::path::PathBuf;
 
+use super::init::{get_solana_rpc_url, get_solana_network};
+
 struct ProofResult {
     proof: Vec<u8>,
     public_witness: Vec<u8>,
@@ -333,9 +335,19 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     let instruction_data = create_instruction_data(&proof_result);
     println!("Total instruction data: {} bytes\n", instruction_data.len());
 
+    // Get RPC URL from config
+    let current_dir = std::env::current_dir()?;
+    let rpc_url = get_solana_rpc_url(&current_dir)
+        .map_err(|e| anyhow::anyhow!("Failed to read config: {}. Run 'zklense init' first.", e))?;
+    let network = get_solana_network(&current_dir)
+        .map_err(|e| anyhow::anyhow!("Failed to read config: {}. Run 'zklense init' first.", e))?;
+
+    println!("🌐 Network: {} | RPC: {}", network, rpc_url);
+    println!();
+
     // Create a connection to cluster
     let connection = RpcClient::new_with_commitment(
-        "https://api.devnet.solana.com".to_string(),
+        rpc_url,
         CommitmentConfig::confirmed(),
     );
 
@@ -420,12 +432,12 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     let json_output = serde_json::to_string_pretty(&simulation_json)?;
 
 
-    // Save to .zkproof/report.json
-    let zkproof_dir = std::env::current_dir()?.join(".zkproof");
-    fs::create_dir_all(&zkproof_dir)
-        .with_context(|| format!("Failed to create .zkproof directory: {}", zkproof_dir.display()))?;
-    
-    let report_path = zkproof_dir.join("report.json");
+    // Save to .zklense/report.json
+    let zklense_dir = std::env::current_dir()?.join(".zklense");
+    fs::create_dir_all(&zklense_dir)
+        .with_context(|| format!("Failed to create .zklense directory: {}", zklense_dir.display()))?;
+
+    let report_path = zklense_dir.join("report.json");
     fs::write(&report_path, &json_output)
         .with_context(|| format!("Failed to write report to: {}", report_path.display()))?;
     

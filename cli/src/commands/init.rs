@@ -3,26 +3,113 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::fmt;
+use std::str::FromStr;
 
-const ZKPROOF_DIR: &str = ".zkproof";
+const ZKLENSE_DIR: &str = ".zklense";
 const CONFIG_FILE: &str = "config.toml";
-pub const DEFAULT_WEB_APP_URL: &str = "https://zkprofile.netlify.app/";
+pub const DEFAULT_WEB_APP_URL: &str = "https://zklense.netlify.app/";
 
-/// Configuration structure for zkproof
+/// Solana network environment
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum SolanaNetwork {
+    #[default]
+    Devnet,
+    Testnet,
+    Mainnet,
+}
+
+impl SolanaNetwork {
+    /// Get all available networks
+    pub fn all() -> &'static [SolanaNetwork] {
+        &[SolanaNetwork::Devnet, SolanaNetwork::Testnet, SolanaNetwork::Mainnet]
+    }
+
+    /// Get the RPC URL for this network
+    pub fn rpc_url(&self) -> &'static str {
+        match self {
+            SolanaNetwork::Devnet => "https://api.devnet.solana.com",
+            SolanaNetwork::Testnet => "https://api.testnet.solana.com",
+            SolanaNetwork::Mainnet => "https://api.mainnet-beta.solana.com",
+        }
+    }
+
+    /// Get the network name as a string
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SolanaNetwork::Devnet => "devnet",
+            SolanaNetwork::Testnet => "testnet",
+            SolanaNetwork::Mainnet => "mainnet",
+        }
+    }
+}
+
+impl fmt::Display for SolanaNetwork {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl FromStr for SolanaNetwork {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "devnet" => Ok(SolanaNetwork::Devnet),
+            "testnet" => Ok(SolanaNetwork::Testnet),
+            "mainnet" | "mainnet-beta" => Ok(SolanaNetwork::Mainnet),
+            _ => Err(format!(
+                "Invalid network '{}'. Valid options: devnet, testnet, mainnet",
+                s
+            )),
+        }
+    }
+}
+
+/// Configuration structure for zklense
 #[derive(Debug, Serialize, Deserialize, Default)]
-pub struct ZkProofConfig {
+pub struct ZkLenseConfig {
     #[serde(default)]
     pub settings: HashMap<String, String>,
 }
 
-impl ZkProofConfig {
+impl ZkLenseConfig {
     /// Create a new configuration with default values
     pub fn new() -> Self {
+        let default_network = SolanaNetwork::default();
         let mut settings = HashMap::new();
         settings.insert("version".to_string(), "0.1.0".to_string());
         settings.insert("initialized_at".to_string(), chrono_timestamp());
         settings.insert("web_app_url".to_string(), DEFAULT_WEB_APP_URL.to_string());
+        settings.insert("solana_network".to_string(), default_network.as_str().to_string());
+        settings.insert("solana_rpc_url".to_string(), default_network.rpc_url().to_string());
         Self { settings }
+    }
+
+    /// Get the current Solana network
+    pub fn get_solana_network(&self) -> SolanaNetwork {
+        self.get("solana_network")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_default()
+    }
+
+    /// Set the Solana network (also updates RPC URL to the default for that network)
+    pub fn set_solana_network(&mut self, network: SolanaNetwork) {
+        self.set("solana_network", network.as_str());
+        self.set("solana_rpc_url", network.rpc_url());
+    }
+
+    /// Get the current Solana RPC URL
+    pub fn get_solana_rpc_url(&self) -> String {
+        self.get("solana_rpc_url")
+            .cloned()
+            .unwrap_or_else(|| self.get_solana_network().rpc_url().to_string())
+    }
+
+    /// Set a custom Solana RPC URL
+    pub fn set_solana_rpc_url(&mut self, rpc_url: &str) {
+        self.set("solana_rpc_url", rpc_url);
     }
 
     /// Get a value from the configuration
@@ -51,19 +138,19 @@ impl ZkProofConfig {
     }
 }
 
-/// Get the path to the .zkproof directory
-pub fn get_zkproof_dir(base_path: &Path) -> PathBuf {
-    base_path.join(ZKPROOF_DIR)
+/// Get the path to the .zklense directory
+pub fn get_zklense_dir(base_path: &Path) -> PathBuf {
+    base_path.join(ZKLENSE_DIR)
 }
 
 /// Get the path to the config file
 pub fn get_config_path(base_path: &Path) -> PathBuf {
-    get_zkproof_dir(base_path).join(CONFIG_FILE)
+    get_zklense_dir(base_path).join(CONFIG_FILE)
 }
 
-/// Check if the .zkproof directory exists at the given path
+/// Check if the .zklense directory exists at the given path
 pub fn is_initialized(base_path: &Path) -> bool {
-    get_zkproof_dir(base_path).exists()
+    get_zklense_dir(base_path).exists()
 }
 
 /// Check if the config file exists at the given path
@@ -77,35 +164,73 @@ pub fn read_config_value(base_path: &Path, key: &str) -> io::Result<Option<Strin
     if !config_path.exists() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
-            "Config file not found. Run 'zkprof init' first.",
+            "Config file not found. Run 'zklense init' first.",
         ));
     }
-    let config = ZkProofConfig::load(&config_path)?;
+    let config = ZkLenseConfig::load(&config_path)?;
     Ok(config.get(key).cloned())
 }
 
 /// Read all config values
-pub fn read_config(base_path: &Path) -> io::Result<ZkProofConfig> {
+pub fn read_config(base_path: &Path) -> io::Result<ZkLenseConfig> {
     let config_path = get_config_path(base_path);
     if !config_path.exists() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
-            "Config file not found. Run 'zkprof init' first.",
+            "Config file not found. Run 'zklense init' first.",
         ));
     }
-    ZkProofConfig::load(&config_path)
+    ZkLenseConfig::load(&config_path)
 }
 
 /// Write a value to the config file
 pub fn write_config_value(base_path: &Path, key: &str, value: &str) -> io::Result<()> {
     let config_path = get_config_path(base_path);
     let mut config = if config_path.exists() {
-        ZkProofConfig::load(&config_path)?
+        ZkLenseConfig::load(&config_path)?
     } else {
-        ZkProofConfig::default()
+        ZkLenseConfig::default()
     };
     config.set(key, value);
     config.save(&config_path)
+}
+
+/// Get the current Solana network from config
+pub fn get_solana_network(base_path: &Path) -> io::Result<SolanaNetwork> {
+    let config = read_config(base_path)?;
+    Ok(config.get_solana_network())
+}
+
+/// Set the Solana network in config (also updates RPC URL to the default for that network)
+pub fn set_solana_network(base_path: &Path, network: SolanaNetwork) -> io::Result<()> {
+    let config_path = get_config_path(base_path);
+    let mut config = read_config(base_path)?;
+    config.set_solana_network(network);
+    config.save(&config_path)
+}
+
+/// Get the current Solana RPC URL from config
+pub fn get_solana_rpc_url(base_path: &Path) -> io::Result<String> {
+    let config = read_config(base_path)?;
+    Ok(config.get_solana_rpc_url())
+}
+
+/// Set a custom Solana RPC URL in config
+pub fn set_solana_rpc_url(base_path: &Path, rpc_url: &str) -> io::Result<()> {
+    let config_path = get_config_path(base_path);
+    let mut config = read_config(base_path)?;
+    config.set_solana_rpc_url(rpc_url);
+    config.save(&config_path)
+}
+
+/// Reset the Solana RPC URL to the default for the current network
+pub fn reset_solana_rpc_url(base_path: &Path) -> io::Result<String> {
+    let config_path = get_config_path(base_path);
+    let mut config = read_config(base_path)?;
+    let default_url = config.get_solana_network().rpc_url().to_string();
+    config.set_solana_rpc_url(&default_url);
+    config.save(&config_path)?;
+    Ok(default_url)
 }
 
 /// Generate a simple timestamp string (without external chrono dependency)
@@ -144,7 +269,7 @@ pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
 
     // Prompt user
     println!(
-        "⚠️  zkprof is not initialized in: {}",
+        "⚠️  zklense is not initialized in: {}",
         base_path.display()
     );
     print!("Would you like to initialize it now? [y/N]: ");
@@ -166,7 +291,7 @@ pub fn ensure_initialized(path: Option<&str>) -> io::Result<bool> {
             ))
         }
     } else {
-        println!("ℹ️  Run 'zkprof init' to initialize the project first.");
+        println!("ℹ️  Run 'zklense init' to initialize the project first.");
         Ok(false)
     }
 }
@@ -207,17 +332,17 @@ pub fn run_init(path: Option<String>) {
         return;
     }
 
-    let zkproof_dir = get_zkproof_dir(&base_path);
+    let zklense_dir = get_zklense_dir(&base_path);
     let config_path = get_config_path(&base_path);
 
     // Check if already initialized
-    if zkproof_dir.exists() {
-        println!("ℹ️  zkproof directory already exists at: {}", zkproof_dir.display());
+    if zklense_dir.exists() {
+        println!("ℹ️  zklense directory already exists at: {}", zklense_dir.display());
         
         // Check if config.toml exists, recreate if missing
         if !config_path.exists() {
             println!("⚠️  Config file missing, recreating...");
-            let config = ZkProofConfig::new();
+            let config = ZkLenseConfig::new();
             match config.save(&config_path) {
                 Ok(_) => {
                     println!("✅ Recreated config file: {}", config_path.display());
@@ -237,10 +362,10 @@ pub fn run_init(path: Option<String>) {
         return;
     }
 
-    // Create .zkproof directory
-    match fs::create_dir_all(&zkproof_dir) {
+    // Create .zklense directory
+    match fs::create_dir_all(&zklense_dir) {
         Ok(_) => {
-            println!("✅ Created directory: {}", zkproof_dir.display());
+            println!("✅ Created directory: {}", zklense_dir.display());
         }
         Err(e) => {
             eprintln!("❌ Failed to create directory: {}", e);
@@ -249,12 +374,12 @@ pub fn run_init(path: Option<String>) {
     }
 
     // Create default config
-    let config = ZkProofConfig::new();
+    let config = ZkLenseConfig::new();
     match config.save(&config_path) {
         Ok(_) => {
             println!("✅ Created config file: {}", config_path.display());
             println!();
-            println!("🎉 zkproof initialized successfully!");
+            println!("🎉 zklense initialized successfully!");
             println!();
             println!("Configuration:");
             for (key, value) in &config.settings {
@@ -264,7 +389,7 @@ pub fn run_init(path: Option<String>) {
         Err(e) => {
             eprintln!("❌ Failed to create config file: {}", e);
             // Clean up the created directory
-            let _ = fs::remove_dir(&zkproof_dir);
+            let _ = fs::remove_dir(&zklense_dir);
         }
     }
 }
@@ -276,15 +401,15 @@ mod tests {
 
     #[test]
     fn test_config_creation_and_loading() {
-        let temp_dir = std::env::temp_dir().join("zkproof_test");
+        let temp_dir = std::env::temp_dir().join("zklense_test");
         let _ = fs::remove_dir_all(&temp_dir);
         fs::create_dir_all(&temp_dir).unwrap();
 
-        let config = ZkProofConfig::new();
+        let config = ZkLenseConfig::new();
         let config_path = temp_dir.join("test_config.toml");
         config.save(&config_path).unwrap();
 
-        let loaded = ZkProofConfig::load(&config_path).unwrap();
+        let loaded = ZkLenseConfig::load(&config_path).unwrap();
         assert_eq!(loaded.get("version"), Some(&"0.1.0".to_string()));
 
         fs::remove_dir_all(&temp_dir).unwrap();
@@ -292,13 +417,13 @@ mod tests {
 
     #[test]
     fn test_is_initialized() {
-        let temp_dir = std::env::temp_dir().join("zkproof_test_init");
+        let temp_dir = std::env::temp_dir().join("zklense_test_init");
         let _ = fs::remove_dir_all(&temp_dir);
         fs::create_dir_all(&temp_dir).unwrap();
 
         assert!(!is_initialized(&temp_dir));
 
-        fs::create_dir_all(get_zkproof_dir(&temp_dir)).unwrap();
+        fs::create_dir_all(get_zklense_dir(&temp_dir)).unwrap();
         assert!(is_initialized(&temp_dir));
 
         fs::remove_dir_all(&temp_dir).unwrap();

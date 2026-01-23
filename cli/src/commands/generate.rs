@@ -114,9 +114,9 @@ pub fn run_generate(name: Option<String>, template: Option<String>) -> Result<()
     
     println!("\n🎉 Project '{}' created successfully!", project_name);
     
-    // Ask if user wants to run zkprof init
+    // Ask if user wants to run zklense init
     let run_init = Confirm::new()
-        .with_prompt("Would you like to initialize zkprof in this project?")
+        .with_prompt("Would you like to initialize zklense in this project?")
         .default(true)
         .interact()
         .unwrap_or(false);

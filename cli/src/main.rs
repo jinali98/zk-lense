@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 mod commands;
 
 #[derive(Parser)]
-#[command(name = "zkprof", version, about = "ZK Profiling Tool")]
+#[command(name = "zklense", version, about = "ZK Profiling Tool")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -40,6 +40,55 @@ enum Commands {
         /// Template to use (age_verifier, merkle_inclusion, or none)
         #[arg(short, long)]
         template: Option<String>,
+    },
+    /// Manage zklense configuration
+    #[command(name = "config")]
+    Config {
+        #[command(subcommand)]
+        action: ConfigCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum ConfigCommands {
+    /// Show all configuration values
+    #[command(name = "show")]
+    Show {
+        path: Option<String>,
+    },
+    /// Get the current Solana network
+    #[command(name = "get-network")]
+    GetNetwork {
+        path: Option<String>,
+    },
+    /// Set the Solana network (devnet, testnet, or mainnet)
+    #[command(name = "set-network")]
+    SetNetwork {
+        /// Network to use: devnet, testnet, or mainnet
+        network: String,
+        path: Option<String>,
+    },
+    /// List all available Solana networks
+    #[command(name = "list-networks")]
+    ListNetworks {
+        path: Option<String>,
+    },
+    /// Get the current Solana RPC URL
+    #[command(name = "get-rpc")]
+    GetRpc {
+        path: Option<String>,
+    },
+    /// Set a custom Solana RPC URL
+    #[command(name = "set-rpc")]
+    SetRpc {
+        /// Custom RPC URL (e.g., https://my-rpc.example.com)
+        rpc_url: String,
+        path: Option<String>,
+    },
+    /// Reset the RPC URL to the default for the current network
+    #[command(name = "reset-rpc")]
+    ResetRpc {
+        path: Option<String>,
     },
 }
 
@@ -94,9 +143,59 @@ async fn main() {
                 eprintln!("❌ Error: {}", e);
             }
         }
+        Some(Commands::Config { action }) => {
+            let (config_action, path) = match action {
+                ConfigCommands::Show { path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::Show, path)
+                }
+                ConfigCommands::GetNetwork { path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::GetNetwork, path)
+                }
+                ConfigCommands::SetNetwork { network, path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::SetNetwork(network), path)
+                }
+                ConfigCommands::ListNetworks { path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::ListNetworks, path)
+                }
+                ConfigCommands::GetRpc { path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::GetRpc, path)
+                }
+                ConfigCommands::SetRpc { rpc_url, path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::SetRpc(rpc_url), path)
+                }
+                ConfigCommands::ResetRpc { path } => {
+                    if !check_initialized(path.as_deref()) {
+                        return;
+                    }
+                    (commands::ConfigAction::ResetRpc, path)
+                }
+            };
+            
+            if let Err(e) = commands::run_config(config_action, path) {
+                eprintln!("❌ Error: {}", e);
+            }
+        }
         None => {
-            println!("zkprof: ZK Profiling Tool");
-            println!("Run `zkprof --help` to see commands.");
+            println!("zklense: ZK Profiling Tool");
+            println!("Run `zklense --help` to see commands.");
         }
     }
 }

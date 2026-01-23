@@ -1,18 +1,18 @@
-# zkprof generate
+# zklense generate
 
 Create a new Noir project with optional templates for common ZK use cases.
 
 ## Synopsis
 
 ```bash
-zkprof generate [OPTIONS]
+zklense generate [OPTIONS]
 ```
 
 ## Description
 
 The `generate` command scaffolds a new Noir project using `nargo new` and optionally applies a pre-built template to get you started quickly with common zero-knowledge proof patterns.
 
-After creating the project, you'll be prompted to initialize zkprof in the new project directory.
+After creating the project, you'll be prompted to initialize zklense in the new project directory.
 
 ## Options
 
@@ -33,26 +33,26 @@ After creating the project, you'll be prompted to initialize zkprof in the new p
 Run without arguments for a fully guided experience:
 
 ```bash
-zkprof generate
+zklense generate
 ```
 
 You'll be prompted for:
 1. Project name
 2. Template selection (from a list)
-3. Whether to initialize zkprof
+3. Whether to initialize zklense
 
 ### With Arguments
 
 Create a project with a specific template:
 
 ```bash
-zkprof generate --name my_age_proof --template age_verifier
+zklense generate --name my_age_proof --template age_verifier
 ```
 
 Create a project without a template:
 
 ```bash
-zkprof generate --name my_circuit --template none
+zklense generate --name my_circuit --template none
 ```
 
 ### Partial Arguments
@@ -60,7 +60,7 @@ zkprof generate --name my_circuit --template none
 Specify only the name (template will be selected interactively):
 
 ```bash
-zkprof generate --name my_project
+zklense generate --name my_project
 ```
 
 ## Available Templates
@@ -153,7 +153,7 @@ After successful execution, the command will:
 
 1. ✅ Create a new Noir project directory with the specified name
 2. 📝 Apply the selected template to `src/main.nr` (if a template was chosen)
-3. 🔧 Optionally initialize zkprof in the project (if you accept the prompt)
+3. 🔧 Optionally initialize zklense in the project (if you accept the prompt)
 
 ### Example Output
 
@@ -164,11 +164,11 @@ After successful execution, the command will:
 ✅ Applied template to src/main.nr
 
 🎉 Project 'my_age_proof' created successfully!
-Would you like to initialize zkprof in this project? [Y/n]: y
-✅ Created directory: /path/to/my_age_proof/.zkproof
-✅ Created config file: /path/to/my_age_proof/.zkproof/config.toml
+Would you like to initialize zklense in this project? [Y/n]: y
+✅ Created directory: /path/to/my_age_proof/.zklense
+✅ Created config file: /path/to/my_age_proof/.zklense/config.toml
 
-🎉 zkproof initialized successfully!
+🎉 zklense initialized successfully!
 
 Next steps:
   cd my_age_proof
@@ -178,14 +178,14 @@ Next steps:
 
 ## Project Structure
 
-After running `zkprof generate --name my_project --template age_verifier`:
+After running `zklense generate --name my_project --template age_verifier`:
 
 ```
 my_project/
 ├── Nargo.toml          # Noir project configuration
 ├── src/
 │   └── main.nr         # Your circuit (with template applied)
-└── .zkproof/           # zkprof configuration (if initialized)
+└── .zklense/           # zklense configuration (if initialized)
     └── config.toml
 ```
 
@@ -216,13 +216,13 @@ After generating your project:
    nargo prove
    ```
 
-5. **Run zkprof to analyze your proof:**
+5. **Run zklense to analyze your proof:**
    ```bash
-   zkprof run
+   zklense run
    ```
 
 ## See Also
 
-- [`zkprof init`](./init.md) - Initialize zkprof in an existing project
-- [`zkprof run`](./run.md) - Run the profiling pipeline
-- [`zkprof simulate`](./simulate.md) - Simulate proof verification on Solana
+- [`zklense init`](./init.md) - Initialize zklense in an existing project
+- [`zklense run`](./run.md) - Run the profiling pipeline
+- [`zklense simulate`](./simulate.md) - Simulate proof verification on Solana

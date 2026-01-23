@@ -254,7 +254,7 @@ pub fn run_pipeline(path: Option<String>) -> io::Result<()> {
         ));
     }
 
-    println!("🚀 zkprof run - Noir Circuit Build Pipeline\n");
+    println!("🚀 zklense run - Noir Circuit Build Pipeline\n");
     println!("📁 Project directory: {}\n", base_path.display());
 
     // Check for Nargo.toml and read circuit name

@@ -1,4 +1,4 @@
-# zkprof CLI
+# zklense CLI
 
 A command-line tool for profiling, building, and deploying zero-knowledge proofs built with [Noir](https://noir-lang.org/) for Solana Blockchain.
 
@@ -20,9 +20,9 @@ A command-line tool for profiling, building, and deploying zero-knowledge proofs
 
 ## Overview
 
-zkprof is developed using Noir and Sunspot to build and deploy zero-knowledge proofs for Solana Blockchain.
+zklense is developed using Noir and Sunspot to build and deploy zero-knowledge proofs for Solana Blockchain.
 
-zkprof streamlines the ZK development workflow by providing:
+zklense streamlines the ZK development workflow by providing:
 
 - 🚀 **Project scaffolding** with pre-built templates for common ZK patterns
   - Age Verifier
@@ -47,42 +47,42 @@ cd cli
 cargo build --release
 ```
 
-The binary will be available at `target/release/zkprof`.
+The binary will be available at `target/release/zklense`.
 
 ### Add to PATH
 
 ```bash
 # Add to your shell profile (.bashrc, .zshrc, etc.)
-export PATH="$PATH:/path/to/zkprof/cli/target/release"
+export PATH="$PATH:/path/to/zklense/cli/target/release"
 ```
 
 ## Quick Start
 
 ```bash
 # Create a new Noir project with a template
-zkprof generate --name my_circuit --template age_verifier
+zklense generate --name my_circuit --template age_verifier
 
 # Navigate to the project
 cd my_circuit
 
 # Run the full build pipeline
-zkprof run
+zklense run
 
 # Simulate on Solana devnet
-zkprof simulate --program-id <PROGRAM_ID>
+zklense simulate --program-id <PROGRAM_ID>
 
 # View profiling results
-zkprof view
+zklense view
 ```
 
 ## Commands
 
-### `zkprof generate`
+### `zklense generate`
 
 Create a new Noir project with optional templates.
 
 ```bash
-zkprof generate [OPTIONS]
+zklense generate [OPTIONS]
 
 Options:
   -n, --name <NAME>          Project name (prompts if not provided)
@@ -101,40 +101,40 @@ Options:
 
 ```bash
 # Interactive mode
-zkprof generate
+zklense generate
 
 # With arguments
-zkprof generate --name my_proof --template merkle_inclusion
+zklense generate --name my_proof --template merkle_inclusion
 ```
 
 ---
 
-### `zkprof init`
+### `zklense init`
 
-Initialize zkprof in an existing Noir project.
+Initialize zklense in an existing Noir project.
 
 ```bash
-zkprof init [PATH]
+zklense init [PATH]
 
 Arguments:
   [PATH]  Project path (defaults to current directory)
 ```
 
-Creates a `.zkproof/` directory with configuration:
+Creates a `.zklense/` directory with configuration:
 
 ```
-.zkproof/
+.zklense/
 └── config.toml
 ```
 
 ---
 
-### `zkprof run`
+### `zklense run`
 
 Run the full proof generation pipeline.
 
 ```bash
-zkprof run [PATH]
+zklense run [PATH]
 
 Arguments:
   [PATH]  Project path (defaults to current directory)
@@ -162,12 +162,12 @@ Arguments:
 
 ---
 
-### `zkprof simulate`
+### `zklense simulate`
 
 Simulate proof verification on Solana devnet and generate a cost analysis report.
 
 ```bash
-zkprof simulate [OPTIONS]
+zklense simulate [OPTIONS]
 
 Options:
   -p, --program-id <PROGRAM_ID>  Solana program ID (prompts if not provided)
@@ -181,36 +181,36 @@ Options:
 - Priority fee recommendations
 - Transaction status and logs
 
-The report is saved to `.zkproof/report.json`.
+The report is saved to `.zklense/report.json`.
 
 ---
 
-### `zkprof view`
+### `zklense view`
 
 Open an interactive web viewer for the profiling report.
 
 ```bash
-zkprof view [PATH]
+zklense view [PATH]
 
 Arguments:
   [PATH]  Project path (defaults to current directory)
 ```
 
-Starts a local server and opens the report in your browser at [zkprofile.netlify.app](https://zkprofile.netlify.app/).
+Starts a local server and opens the report in your browser at [zklenseile.netlify.app](https://zklenseile.netlify.app/).
 
 ---
 
-### `zkprof version`
+### `zklense version`
 
 Display the current version.
 
 ```bash
-zkprof version
+zklense version
 ```
 
 ## Project Structure
 
-After running `zkprof generate` and `zkprof run`:
+After running `zklense generate` and `zklense run`:
 
 ```
 my_project/
@@ -226,8 +226,8 @@ my_project/
 │   ├── my_project.proof    # Groth16 proof
 │   ├── my_project.pw       # Public witness
 │   └── my_project.so       # Solana program
-└── .zkproof/
-    ├── config.toml         # zkprof configuration
+└── .zklense/
+    ├── config.toml         # zklense configuration
     └── report.json         # Simulation report
 ```
 
@@ -236,7 +236,7 @@ my_project/
 ### 1. Create a New Project
 
 ```bash
-zkprof generate --name age_proof --template age_verifier
+zklense generate --name age_proof --template age_verifier
 cd age_proof
 ```
 
@@ -254,7 +254,7 @@ age_threshold = "21"
 
 ```bash
 # Run the full pipeline
-zkprof run
+zklense run
 
 # When prompted, deploy to Solana devnet
 # Save the Program ID that's returned
@@ -264,15 +264,15 @@ zkprof run
 
 ```bash
 # Simulate with your deployed program
-zkprof simulate --program-id <YOUR_PROGRAM_ID>
+zklense simulate --program-id <YOUR_PROGRAM_ID>
 
 # View the report
-zkprof view
+zklense view
 ```
 
 ## Metrics Guide
 
-zkprof tracks several metrics to help optimize zero-knowledge proofs for Solana deployment. Understanding these metrics and how to interpret them is important for building efficient and cost-effective ZK applications.
+zklense tracks several metrics to help optimize zero-knowledge proofs for Solana deployment. Understanding these metrics and how to interpret them is important for building efficient and cost-effective ZK applications.
 
 ### Compute Units
 **What it measures:**
@@ -387,13 +387,13 @@ Indicates whether your proof verification transaction would succeed on-chain.
 
 ## Configuration
 
-zkprof stores configuration in `.zkproof/config.toml`:
+zklense stores configuration in `.zklense/config.toml`:
 
 ```toml
 [settings]
 version = "0.1.0"
 initialized_at = "1234567890"
-web_app_url = "https://zkprofile.netlify.app/"
+web_app_url = "https://zklenseile.netlify.app/"
 ```
 
 ## Dependencies
@@ -412,14 +412,14 @@ web_app_url = "https://zkprofile.netlify.app/"
 
 ## Error Handling
 
-zkprof provides helpful error messages:
+zklense provides helpful error messages:
 
 ```bash
 # Missing nargo
 ❌ Error: Failed to execute 'nargo new'. Is Nargo installed and in PATH?
 
 # Not initialized
-⚠️  zkprof is not initialized in: /path/to/project
+⚠️  zklense is not initialized in: /path/to/project
 Would you like to initialize it now? [y/N]:
 
 # Missing proof files
@@ -438,5 +438,5 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - [Noir Documentation](https://noir-lang.org/docs/)
 - [Sunspot Documentation](https://github.com/reilabs/sunspot)
 - [Solana Documentation](https://docs.solana.com/)
-- [zkprof Web Viewer](https://zkprofile.netlify.app/)
+- [zklense Web Viewer](https://zklenseile.netlify.app/)
 
