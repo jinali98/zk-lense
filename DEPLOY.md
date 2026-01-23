@@ -104,3 +104,15 @@ brew tap gihanrcg/zklense
 brew install zklense
 zklense --version
 ```
+
+
+
+git clone https://github.com/reilabs/sunspot.git ~/sunspot
+
+cd ~/sunspot/go && go build -o sunspot .
+
+export PATH="$HOME/sunspot/go:$PATH"
+
+export GNARK_VERIFIER_BIN="$HOME/sunspot/gnark-solana/crates/verifier-bin"
+
+source ~/.zshrc

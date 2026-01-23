@@ -145,6 +145,9 @@ fn create_simulation_json(
     proof_size: usize,
     witness_size: usize,
     recent_prioritization_fees: Option<serde_json::Value>,
+    program_id: &Pubkey,
+    network: &super::init::SolanaNetwork,
+    rpc_url: &str,
 ) -> serde_json::Value {
     // Extract compute units
     let units_consumed = sim_result.units_consumed.unwrap_or(0);
@@ -319,7 +322,12 @@ fn create_simulation_json(
                 "Deserialization may have failed - check transaction structure"
             }
         },
-        "recent_prioritization_fees": recent_prioritization_fees.unwrap_or(json!(null))
+        "recent_prioritization_fees": recent_prioritization_fees.unwrap_or(json!(null)),
+        "program_id": program_id.to_string(),
+        "environment": {
+            "network": network.to_string(),
+            "rpc_url": rpc_url.to_string(),
+        }
     })
 }
 
@@ -612,6 +620,9 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
         proof_size,
         witness_size,
         recent_prioritization_fees,
+        &program_id,
+        &network,
+        &rpc_url,
     );
 
     let json_output = serde_json::to_string_pretty(&simulation_json)?;
