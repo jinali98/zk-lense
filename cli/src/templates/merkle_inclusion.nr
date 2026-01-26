@@ -1,6 +1,10 @@
 /*
 File: merkle_inclusion.nr
 Purpose: Prove membership in a Merkle tree using a value and a Merkle path.
+Use Cases:
+- Anonymous set membership (e.g., allowlists, voting eligibility)
+- Proving ownership without revealing identity
+- Privacy-preserving authentication
 */
 
 global DEPTH: u32 = 3;
