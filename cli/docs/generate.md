@@ -19,7 +19,7 @@ After creating the project, you'll be prompted to initialize zklense in the new 
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--name <NAME>` | `-n` | Name of the new Noir project. If not provided, you'll be prompted to enter it. |
-| `--template <TEMPLATE>` | `-t` | Template to use. Options: `age_verifier`, `merkle_inclusion`, or `none`. If not provided, you'll select from an interactive list. |
+| `--template <TEMPLATE>` | `-t` | Template to use. Options: `age_verifier`, `merkle_inclusion`, `hash_preimage`, `range_proof` or `none`. If not provided, you'll select from an interactive list. |
 | `--help` | `-h` | Print help information |
 
 ## Prerequisites

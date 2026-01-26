@@ -80,7 +80,7 @@ zklense generate [OPTIONS]
 
 Options:
   -n, --name <NAME>          Project name (prompts if not provided)
-  -t, --template <TEMPLATE>  Template: age_verifier, merkle_inclusion, or none
+  -t, --template <TEMPLATE>  Template: age_verifier, merkle_inclusion, hash_preimage, range_proof or none
 ```
 
 **Available Templates:**
@@ -90,6 +90,8 @@ Options:
 | `none` | Start with default Noir template |
 | `age_verifier` | Verify age threshold based on year of birth |
 | `merkle_inclusion` | Prove membership in a Merkle tree |
+| `hash_preimage` | Prove that a value is the preimage of a hash |
+| `range_proof` | Prove that a value is within a range |
 
 **Examples:**
 

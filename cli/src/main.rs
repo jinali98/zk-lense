@@ -38,7 +38,7 @@ enum Commands {
         #[arg(short, long)]
         name: Option<String>,
 
-        /// Template to use (age_verifier, merkle_inclusion, or none)
+        /// Template to use (age_verifier, merkle_inclusion, hash_preimage, range_proof or none)
         #[arg(short, long)]
         template: Option<String>,
     },

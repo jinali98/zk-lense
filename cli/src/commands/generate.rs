@@ -26,6 +26,16 @@ const TEMPLATES: &[Template] = &[
         display_name: "Merkle Inclusion Proof - Prove membership in a Merkle tree",
         content: include_str!("../templates/merkle_inclusion.nr"),
     },
+    Template {
+        name: "hash_preimage",
+        display_name: "Hash Preimage Proof - Prove that a value is the preimage of a hash",
+        content: include_str!("../templates/hash_preimage.nr"),
+    },
+    Template {
+        name: "range_proof",
+        display_name: "Range Proof - Prove that a value is within a range",
+        content: include_str!("../templates/range_proof.nr"),
+    },
 ];
 
 /// Run the generate command
