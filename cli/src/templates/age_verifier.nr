@@ -1,6 +1,10 @@
 /*
 File: age_verifier.nr
 Purpose: Verify if a person is within the age threshold based on their year of birth and the current year.
+Use Cases:
+- Age verification
+- KYC compliance
+- Anonymous age verification
 */
 
 fn main(year_of_birth: u64, current_year: pub u64, age_threshold: pub u64) {
