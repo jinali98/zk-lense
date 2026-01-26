@@ -11,7 +11,7 @@ use crate::ui::{self, emoji};
 
 const ZKLENSE_DIR: &str = ".zklense";
 const CONFIG_FILE: &str = "config.toml";
-pub const DEFAULT_WEB_APP_URL: &str = "https://zklense.netlify.app/";
+pub const DEFAULT_WEB_APP_URL: &str = "https://zklense.netlify.app/report";
 
 /// Solana network environment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
