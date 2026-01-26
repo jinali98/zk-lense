@@ -209,6 +209,8 @@ Generate a new Noir circuit with optional templates
   ⏳ None - Start with default Noir template
   📄 Age Verifier - Verify age threshold based on year of birth
   📄 Merkle Inclusion Proof - Prove membership in a Merkle tree
+  📄 Hash Preimage Proof - Prove that a value is the preimage of a hash
+  📄 Range Proof - Prove that a value is within a range
 
 ✓ Created Noir project: my_circuit
 ✓ Applied template: Age Verifier

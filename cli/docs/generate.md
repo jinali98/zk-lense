@@ -147,6 +147,70 @@ fn main(
 }
 ```
 
+---
+
+### Hash Preimage Proof
+
+**Description:** Prove that a value is the preimage of a hash.
+
+**Use Cases:**
+- Sealed bids
+- Lotteries
+- Predictions
+
+**Inputs:**
+| Parameter | Type | Visibility | Description |
+|-----------|------|------------|-------------|
+| `pre_image` | `Field` | Private | The value to prove is the preimage of a hash |
+| `salt` | `Field` | Public | The salt value used to hash the preimage with  |
+| `commitment` | `Field` | Public | The commitment to verify against |
+
+**Example Usage:**
+```noir
+// Prove a value is the preimage of a hash
+// Private input: pre_image = value to prove is the pre image of a hash
+// Public inputs: salt = salt used to hash the pre image, commitment = commitment to verify against
+```
+
+**Template Code:**
+```noir
+fn main(pre_image: Field, salt: Field, commitment: pub Field) {
+    let computed_hash = std::hash::pedersen_hash([pre_image, salt]);
+    assert(computed_hash == commitment, "Computed hash does not match the provided commitment");
+}
+```
+
+---
+
+### Range Proof
+
+**Description:** Prove that a value is within a range.
+
+**Use Cases:**
+- Proving ownership without revealing identity
+- Privacy-preserving authentication
+
+**Inputs:**
+| Parameter | Type | Visibility | Description |
+|-----------|------|------------|-------------|
+| `value` | `u64` | Private | The value to prove is within a range |
+| `min` | `u64` | Public | The minimum value in the range |
+| `max` | `u64` | Public | The maximum value in the range |
+
+**Example Usage:**
+```noir
+// Prove a value is within a range
+// Private input: value = 42000
+// Public inputs: min = 0, max = 100000
+```
+
+**Template Code:**
+```noir
+fn main(value: u64, min: pub u64, max: pub u64) {
+    assert(value >= min && value <= max, "Value is not within the range");
+}
+```
+
 ## Output
 
 After successful execution, the command will:

@@ -27,6 +27,8 @@ zklense streamlines the ZK development workflow by providing:
 - 🚀 **Project scaffolding** with pre-built templates for common ZK patterns
   - Age Verifier
   - Merkle Inclusion
+  - Hash Preimage
+  - Range Proof
 - 🔧 **Build pipeline** automation (compile, proof generation, verify, solana deployment)
 - 📊 **Proof simulation** and cost analysis for Solana deployment
 - 🌐 **Interactive viewer** for profiling reports
