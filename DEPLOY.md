@@ -59,8 +59,8 @@ cd ~/homebrew-zklense
 
 # Get SHA256 checksums from GitHub release page
 # Or download and calculate:
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.2/zklense-x86_64-apple-darwin.tar.gz
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.2/zklense-aarch64-apple-darwin.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/download/v0.1.2/zklense-x86_64-apple-darwin.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/download/v0.1.2/zklense-aarch64-apple-darwin.tar.gz
 shasum -a 256 zklense-x86_64-apple-darwin.tar.gz
 shasum -a 256 zklense-aarch64-apple-darwin.tar.gz
 
@@ -91,7 +91,7 @@ git push origin main
 
 ```bash
 # GitHub Release
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.2/zklense-aarch64-apple-darwin.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/download/v0.1.2/zklense-aarch64-apple-darwin.tar.gz
 tar -xzf zklense-aarch64-apple-darwin.tar.gz
 ./zklense --version
 

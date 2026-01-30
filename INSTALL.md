@@ -24,13 +24,13 @@ Complete guide for installing zklense CLI and deploying releases across platform
 
 ### GitHub Releases (Recommended)
 
-Pre-built binaries for all platforms are available on the [GitHub Releases](https://github.com/jinali98/zk-profiling-solana/releases) page.
+Pre-built binaries for all platforms are available on the [GitHub Releases](https://github.com/jinali98/zk-lense/releases) page.
 
 #### Linux (x86_64)
 
 ```bash
 # Download the latest release
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/latest/download/zklense-x86_64-unknown-linux-gnu.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/latest/download/zklense-x86_64-unknown-linux-gnu.tar.gz
 
 # Extract
 tar -xzf zklense-x86_64-unknown-linux-gnu.tar.gz
@@ -46,7 +46,7 @@ zklense --version
 
 ```bash
 # Download the latest release
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/latest/download/zklense-x86_64-apple-darwin.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/latest/download/zklense-x86_64-apple-darwin.tar.gz
 
 # Extract
 tar -xzf zklense-x86_64-apple-darwin.tar.gz
@@ -62,7 +62,7 @@ zklense --version
 
 ```bash
 # Download the latest release
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/latest/download/zklense-aarch64-apple-darwin.tar.gz
+curl -LO https://github.com/jinali98/zk-lense/releases/latest/download/zklense-aarch64-apple-darwin.tar.gz
 
 # Extract
 tar -xzf zklense-aarch64-apple-darwin.tar.gz
@@ -78,7 +78,7 @@ zklense --version
 
 ```powershell
 # Download the latest release
-Invoke-WebRequest -Uri "https://github.com/jinali98/zk-profiling-solana/releases/latest/download/zklense-x86_64-pc-windows-msvc.zip" -OutFile "zklense.zip"
+Invoke-WebRequest -Uri "https://github.com/jinali98/zk-lense/releases/latest/download/zklense-x86_64-pc-windows-msvc.zip" -OutFile "zklense.zip"
 
 # Extract
 Expand-Archive -Path zklense.zip -DestinationPath .
@@ -171,7 +171,7 @@ For development or custom builds:
 
 ```bash
 # Clone the repository
-git clone https://github.com/jinali98/zk-profiling-solana.git
+git clone https://github.com/jinali98/zk-lense.git
 cd zkprof/cli
 
 # Build release binary
@@ -249,7 +249,7 @@ All releases include SHA256 checksums. Verify your download:
 
 ```bash
 # Download checksums
-curl -LO https://github.com/jinali98/zk-profiling-solana/releases/latest/download/checksums.txt
+curl -LO https://github.com/jinali98/zk-lense/releases/latest/download/checksums.txt
 
 # Verify
 sha256sum -c checksums.txt
@@ -259,7 +259,7 @@ sha256sum -c checksums.txt
 
 ```powershell
 # Download checksums
-Invoke-WebRequest -Uri "https://github.com/jinali98/zk-profiling-solana/releases/latest/download/checksums.txt" -OutFile "checksums.txt"
+Invoke-WebRequest -Uri "https://github.com/jinali98/zk-lense/releases/latest/download/checksums.txt" -OutFile "checksums.txt"
 
 # Verify
 Get-FileHash zklense.exe -Algorithm SHA256 | Select-Object Hash
@@ -474,7 +474,7 @@ cargo publish
 2. **Update formula** (`Formula/zklense.rb`):
    ```ruby
    version "0.1.0"
-   url "https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.0/zklense-x86_64-apple-darwin.tar.gz"
+   url "https://github.com/jinali98/zk-lense/releases/download/v0.1.0/zklense-x86_64-apple-darwin.tar.gz"
    sha256 "CHECKSUM_HERE"
    ```
 
@@ -498,7 +498,7 @@ cargo publish
    ```json
    {
      "version": "0.1.0",
-     "url": "https://github.com/jinali98/zk-profiling-solana/releases/download/v0.1.0/zklense-x86_64-pc-windows-msvc.zip",
+     "url": "https://github.com/jinali98/zk-lense/releases/download/v0.1.0/zklense-x86_64-pc-windows-msvc.zip",
      "hash": "CHECKSUM_HERE"
    }
    ```
@@ -539,9 +539,9 @@ Before creating a release:
 
 For issues or questions:
 
-- **GitHub Issues:** [Create an issue](https://github.com/jinali98/zk-profiling-solana/issues)
+- **GitHub Issues:** [Create an issue](https://github.com/jinali98/zk-lense/issues)
 - **Documentation:** See [README.md](README.md)
-- **Discussions:** [GitHub Discussions](https://github.com/jinali98/zk-profiling-solana/discussions)
+- **Discussions:** [GitHub Discussions](https://github.com/jinali98/zk-lense/discussions)
 
 ---
 

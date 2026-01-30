@@ -39,7 +39,7 @@ zklense streamlines the ZK development workflow by providing:
 
 ### Quick Install Options
 
-- **GitHub Releases** (Recommended): Download pre-built binaries from [Releases](https://github.com/jinali98/zk-profiling-solana/releases)
+- **GitHub Releases** (Recommended): Download pre-built binaries from [Releases](https://github.com/jinali98/zk-lense/releases)
 - **crates.io**: `cargo install zklense` (requires Rust)
 - **Homebrew**: `brew tap gihanrcg/zklense && brew install zklense` (macOS/Linux)
 - **Scoop**: `scoop install zklense` (Windows)
