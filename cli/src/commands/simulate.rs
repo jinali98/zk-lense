@@ -16,6 +16,11 @@ use std::time::Instant;
 use super::init::{get_solana_network, get_solana_rpc_url};
 use crate::ui::{self, emoji};
 
+// Solana constants
+const LAMPORTS_PER_SIGNATURE: u64 = 5000;
+const MAX_COMPUTE_UNITS: u32 = 1_400_000;
+const DEFAULT_COMPUTE_UNITS: u32 = 200_000;
+const MAX_TRANSACTION_SIZE: usize = 1232;
 /// Check if an error is a 403 Forbidden error and show helpful message
 fn handle_rpc_error(error: anyhow::Error, rpc_url: &str) -> anyhow::Error {
     let error_msg = error.to_string().to_lowercase();
@@ -141,7 +146,7 @@ fn create_instruction_data(proof_result: &ProofResult) -> Vec<u8> {
 }
 
 fn parse_compute_budget_instructions(transaction: &Transaction) -> (u32, u64) {
-    let mut cu_limit = 200_000u32; // Default CU limit
+    let mut cu_limit = DEFAULT_COMPUTE_UNITS; // Default CU limit
     let mut cu_price = 0u64; // Default CU price (microlamports per CU)
 
     let compute_budget_program_id =
@@ -197,13 +202,22 @@ fn create_simulation_json(
         0.0
     };
 
+    // Check if CU limit exceeds maximum
+    let cu_limit_warning = if cu_limit > MAX_COMPUTE_UNITS {
+        Some(format!(
+            "CU limit ({}) exceeds maximum allowed ({})",
+            cu_limit, MAX_COMPUTE_UNITS
+        ))
+    } else {
+        None
+    };
+
     // Extract transaction details
     let transaction_size = bincode::serialize(transaction).unwrap_or_default().len();
     let message_size = bincode::serialize(&transaction.message)
         .unwrap_or_default()
         .len();
-    let max_message_size = 1232; // Solana max transaction size
-    let message_within_size = message_size <= max_message_size;
+    let message_within_size = message_size <= MAX_TRANSACTION_SIZE;
 
     // Extract logs
     let logs = sim_result
@@ -227,15 +241,16 @@ fn create_simulation_json(
         0.0
     };
 
-    // Fee calculations
-    let base_fee = 5000u64; // Base fee in lamports
+    // Fee calculations - FIXED
+    let num_signatures = transaction.signatures.len().max(1) as u64;
+    let base_fee = num_signatures * LAMPORTS_PER_SIGNATURE;
 
     // Calculate prioritization fee (convert from microlamports to lamports)
     let prioritization_fee_lamports = (cu_limit as u64 * cu_price_microlamports) / 1_000_000;
     let total_fee = base_fee + prioritization_fee_lamports;
     let cost_in_sol = total_fee as f64 / LAMPORTS_PER_SOL as f64;
 
-    // Calculate write lock CUs
+    // Calculate writable accounts for informational purposes
     let header = &transaction.message.header;
     let total_accounts = transaction.message.account_keys.len();
     let writable_signed = (header.num_required_signatures as usize)
@@ -243,31 +258,30 @@ fn create_simulation_json(
     let writable_unsigned = total_accounts
         .saturating_sub(header.num_required_signatures as usize)
         .saturating_sub(header.num_readonly_unsigned_accounts as usize);
-    let write_lock_cus = writable_signed + writable_unsigned;
-    let signature_cus = 0u64;
+    let total_writable_accounts = writable_signed + writable_unsigned;
 
-    // Calculate priority
-    let priority_numerator = prioritization_fee_lamports + base_fee;
-    let priority_denominator = 1 + compute_budget + signature_cus + write_lock_cus as u64;
-    let priority = if priority_denominator > 0 {
-        priority_numerator as f64 / priority_denominator as f64
+    // Calculate priority - FIXED (simplified to match Solana's actual priority calculation)
+    let priority = if compute_budget > 0 {
+        prioritization_fee_lamports as f64 / compute_budget as f64
     } else {
         0.0
     };
 
     // Generate suggestions
-    let compute_suggestion = if compute_budget_percentage > 90.0 {
-        "Consider optimizing compute usage - near budget limit"
+    let compute_suggestion = if let Some(ref warning) = cu_limit_warning {
+        warning.clone()
+    } else if compute_budget_percentage > 90.0 {
+        "Consider optimizing compute usage - near budget limit".to_string()
     } else if compute_budget_percentage > 70.0 {
-        "Monitor compute usage - approaching budget limit"
+        "Monitor compute usage - approaching budget limit".to_string()
     } else {
-        "Compute usage is within acceptable range"
+        "Compute usage is within acceptable range".to_string()
     };
 
     let size_suggestion = if !message_within_size {
         format!(
             "Transaction size ({}) exceeds maximum ({})",
-            message_size, max_message_size
+            message_size, MAX_TRANSACTION_SIZE
         )
     } else {
         format!("Transaction size ({}) is within limits", message_size)
@@ -284,7 +298,9 @@ fn create_simulation_json(
             "total_compute_units_consumed": units_consumed,
             "total_cu": units_consumed,
             "compute_budget": compute_budget,
+            "max_compute_units": MAX_COMPUTE_UNITS,
             "percentage_of_compute_budget_used": format!("{:.2}%", compute_budget_percentage),
+            "warning": cu_limit_warning,
             "suggestion": compute_suggestion
         },
         "proof": {
@@ -300,7 +316,8 @@ fn create_simulation_json(
         "cost": {
             "cost_in_sol": format!("{:.9}", cost_in_sol),
             "cost_in_lamports": total_fee,
-            "gas_fee": base_fee,
+            "base_fee_per_signature": LAMPORTS_PER_SIGNATURE,
+            "num_signatures": num_signatures,
             "base_fee": base_fee,
             "cu_limit": cu_limit,
             "cu_price_microlamports": cu_price_microlamports,
@@ -308,8 +325,6 @@ fn create_simulation_json(
             "priority_fee": prioritization_fee_lamports,
             "total_fee": total_fee,
             "priority": format!("{:.9}", priority),
-            "signature_cus": signature_cus,
-            "write_lock_cus": write_lock_cus,
             "suggestion": fee_suggestion
         },
         "transaction_status": {
@@ -327,12 +342,12 @@ fn create_simulation_json(
             "proof_size": proof_size,
             "witness_size": witness_size,
             "total_proof_witness_size": total_proof_witness_size,
-            "max_message_size": max_message_size,
+            "max_message_size": MAX_TRANSACTION_SIZE,
             "message_within_size": message_within_size,
             "message": if message_within_size {
-                format!("Success: Message size ({}) is within limits ({})", message_size, max_message_size)
+                format!("Success: Message size ({}) is within limits ({})", message_size, MAX_TRANSACTION_SIZE)
             } else {
-                format!("Fail: Message size ({}) exceeds maximum ({})", message_size, max_message_size)
+                format!("Fail: Message size ({}) exceeds maximum ({})", message_size, MAX_TRANSACTION_SIZE)
             },
             "suggestion": size_suggestion
         },
@@ -340,7 +355,17 @@ fn create_simulation_json(
             "logs": logs,
             "log_count": logs.len()
         },
+        "accounts": {
+            "total_accounts": total_accounts,
+            "writable_signed_accounts": writable_signed,
+            "writable_unsigned_accounts": writable_unsigned,
+            "total_writable_accounts": total_writable_accounts,
+            "readonly_signed_accounts": header.num_readonly_signed_accounts,
+            "readonly_unsigned_accounts": header.num_readonly_unsigned_accounts
+        },
         "fee_recommendation": {
+            "base_fee_per_signature": LAMPORTS_PER_SIGNATURE,
+            "num_signatures": num_signatures,
             "base_fee": base_fee,
             "cu_limit": cu_limit,
             "cu_price_microlamports": cu_price_microlamports,
@@ -388,37 +413,46 @@ fn print_simulation_results(
     let message_size = bincode::serialize(&transaction.message)
         .unwrap_or_default()
         .len();
-    let max_message_size = 1232;
-    let message_within_size = message_size <= max_message_size;
+    let message_within_size = message_size <= MAX_TRANSACTION_SIZE;
 
     let is_success = sim_result.err.is_none();
     let total_proof_witness_size = proof_size + witness_size;
 
-    // Fee calculations
-    let base_fee = 5000u64;
+    // Fee calculations - FIXED
+    let num_signatures = transaction.signatures.len().max(1) as u64;
+    let base_fee = num_signatures * LAMPORTS_PER_SIGNATURE;
     let prioritization_fee_lamports = (cu_limit as u64 * cu_price_microlamports) / 1_000_000;
     let total_fee = base_fee + prioritization_fee_lamports;
     let cost_in_sol = total_fee as f64 / LAMPORTS_PER_SOL as f64;
 
     // Compute Units Section
     ui::section(emoji::LIGHTNING, "Compute Units");
-    ui::print_tree_with_status(&[
-        (
-            "Consumed",
-            &format!("{:>12} CU", format_number(units_consumed)),
-            true,
-        ),
-        (
-            "Budget",
-            &format!("{:>12} CU", format_number(compute_budget)),
-            true,
-        ),
-        (
-            "Usage",
-            &format!("{:>11.2}%", compute_budget_percentage),
-            compute_budget_percentage <= 90.0,
-        ),
-    ]);
+    let consumed_str = format!("{:>12} CU", format_number(units_consumed));
+    let budget_str = format!("{:>12} CU", format_number(compute_budget));
+    let usage_str = format!("{:>11.2}%", compute_budget_percentage);
+    
+    let cu_items: &[(&str, &str, bool)] = &[
+        ("Consumed", &consumed_str, true),
+        ("Budget", &budget_str, true),
+        ("Usage", &usage_str, compute_budget_percentage <= 90.0),
+    ];
+    
+    // Add warning if CU limit exceeds maximum
+    if cu_limit > MAX_COMPUTE_UNITS {
+        ui::print_tree_with_status(cu_items);
+        println!(
+            "  {} {}",
+            emoji::ERROR,
+            style(format!(
+                "Warning: CU limit ({}) exceeds maximum ({})",
+                format_number(cu_limit as u64),
+                format_number(MAX_COMPUTE_UNITS as u64)
+            ))
+            .yellow()
+        );
+    } else {
+        ui::print_tree_with_status(cu_items);
+    }
 
     // Transaction Status Section
     ui::section(
@@ -454,12 +488,16 @@ fn print_simulation_results(
             &format!("{} bytes", message_size),
             message_within_size,
         ),
-        ("Max Size", &format!("{} bytes", max_message_size), true),
+        ("Max Size", &format!("{} bytes", MAX_TRANSACTION_SIZE), true),
     ]);
 
     // Cost Estimate Section
     ui::section(emoji::MONEY, "Cost Estimate");
     ui::print_tree(&[
+        (
+            "Signatures",
+            &format!("{} × {} lamports", num_signatures, LAMPORTS_PER_SIGNATURE),
+        ),
         (
             "Base Fee",
             &format!("{:.9} SOL", base_fee as f64 / LAMPORTS_PER_SOL as f64),
@@ -575,10 +613,11 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
         data: instruction_data,
     };
 
-    // Create compute budget instruction manually
+    // Create compute budget instruction automatically
+    // Use MAX_COMPUTE_UNITS as default to ensure sufficient budget for any proof size
     let compute_budget_program_id =
         Pubkey::from_str("ComputeBudget111111111111111111111111111111")?;
-    let compute_units = 500_000u32;
+    let compute_units = MAX_COMPUTE_UNITS;
 
     let mut compute_unit_limit_data = vec![2u8, 0, 0, 0];
     compute_unit_limit_data.extend_from_slice(&compute_units.to_le_bytes());
