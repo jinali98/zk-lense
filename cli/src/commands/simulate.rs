@@ -392,27 +392,19 @@ fn print_simulation_results(
 
     // Compute Units Section
     ui::section(emoji::LIGHTNING, "Compute Units");
-    let mut cu_items = vec![
-        (
-            "Consumed",
-            &format!("{:>12} CU", format_number(units_consumed)),
-            true,
-        ),
-        (
-            "Budget",
-            &format!("{:>12} CU", format_number(compute_budget)),
-            true,
-        ),
-        (
-            "Usage",
-            &format!("{:>11.2}%", compute_budget_percentage),
-            compute_budget_percentage <= 90.0,
-        ),
+    let consumed_str = format!("{:>12} CU", format_number(units_consumed));
+    let budget_str = format!("{:>12} CU", format_number(compute_budget));
+    let usage_str = format!("{:>11.2}%", compute_budget_percentage);
+    
+    let cu_items: &[(&str, &str, bool)] = &[
+        ("Consumed", &consumed_str, true),
+        ("Budget", &budget_str, true),
+        ("Usage", &usage_str, compute_budget_percentage <= 90.0),
     ];
     
     // Add warning if CU limit exceeds maximum
     if cu_limit > MAX_COMPUTE_UNITS {
-        ui::print_tree_with_status(&cu_items);
+        ui::print_tree_with_status(cu_items);
         println!(
             "  {} {}",
             emoji::ERROR,
@@ -424,7 +416,7 @@ fn print_simulation_results(
             .yellow()
         );
     } else {
-        ui::print_tree_with_status(&cu_items);
+        ui::print_tree_with_status(cu_items);
     }
 
     // Transaction Status Section
