@@ -16,6 +16,42 @@ use std::time::Instant;
 use super::init::{get_solana_network, get_solana_rpc_url};
 use crate::ui::{self, emoji};
 
+/// Check if an error is a 403 Forbidden error and show helpful message
+fn handle_rpc_error(error: anyhow::Error, rpc_url: &str) -> anyhow::Error {
+    let error_msg = error.to_string().to_lowercase();
+    let error_chain = format!("{:?}", error).to_lowercase();
+    
+    // Check if error contains 403 Forbidden indicators
+    let is_403_error = error_msg.contains("403")
+        || error_msg.contains("forbidden")
+        || error_msg.contains("client error (403")
+        || error_chain.contains("403")
+        || error_chain.contains("forbidden")
+        || error_msg.contains("rate limit")
+        || error_msg.contains("rate_limit");
+    
+    if is_403_error {
+        ui::blank();
+        ui::panel_error(
+            "RPC RATE LIMIT ERROR",
+            &format!(
+                "Received 403 Forbidden error from Solana RPC endpoint.\n\nThis is likely due to rate limiting on the public RPC endpoint:\n{}",
+                style(rpc_url).dim()
+            ),
+            Some("Public Solana RPC endpoints have rate limits that may cause 403 errors when exceeded."),
+            Some(&[
+                "Use a custom RPC endpoint: zklense config set-rpc <your-rpc-url>",
+                "Or switch to a different network: zklense config set-network <network>",
+                "View current config: zklense config show",
+                "List available networks: zklense config list-networks",
+            ]),
+        );
+        ui::blank();
+    }
+    
+    error
+}
+
 struct ProofResult {
     proof: Vec<u8>,
     public_witness: Vec<u8>,
@@ -560,7 +596,8 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     );
 
     // Get blockhash
-    let blockhash = connection.get_latest_blockhash().await?;
+    let blockhash = connection.get_latest_blockhash().await
+        .map_err(|e| handle_rpc_error(anyhow::Error::from(e).context("Failed to get latest blockhash"), &rpc_url))?;
     transaction.message.recent_blockhash = blockhash;
 
     ui::spinner_success_with_duration(
@@ -573,7 +610,8 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
     let start = Instant::now();
     let spinner = ui::spinner("Simulating transaction...");
 
-    let sim_response = connection.simulate_transaction(&transaction).await?;
+    let sim_response = connection.simulate_transaction(&transaction).await
+        .map_err(|e| handle_rpc_error(anyhow::Error::from(e).context("Failed to simulate transaction"), &rpc_url))?;
 
     ui::spinner_success_with_duration(&spinner, "Simulation complete", start.elapsed().as_millis());
 

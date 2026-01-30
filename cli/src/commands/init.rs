@@ -367,6 +367,7 @@ pub fn run_init(path: Option<String>) {
                         style(config_path.display()).dim()
                     ));
                     print_config_summary(&config);
+                    print_prover_toml_note(&base_path);
                 }
                 Err(e) => {
                     ui::error(&format!("Failed to recreate config file: {}", e));
@@ -420,6 +421,9 @@ pub fn run_init(path: Option<String>) {
 
             // Show configuration summary
             print_config_summary(&config);
+
+            // Show note about Prover.toml
+            print_prover_toml_note(&base_path);
         }
         Err(e) => {
             ui::spinner_error(&spinner, &format!("Failed to create config file: {}", e));
@@ -427,6 +431,33 @@ pub fn run_init(path: Option<String>) {
             let _ = fs::remove_dir(&zklense_dir);
         }
     }
+}
+
+/// Print a note reminding users to update Prover.toml before running zklense run
+fn print_prover_toml_note(base_path: &Path) {
+    let prover_toml_path = base_path.join("Prover.toml");
+    let prover_exists = prover_toml_path.exists();
+
+    ui::section(emoji::BULB, "Next Steps");
+
+    if prover_exists {
+        ui::panel_info(
+            "IMPORTANT",
+            &format!(
+                "Before running 'zklense run', make sure to update Prover.toml with the correct input values for your circuit.\n\nFile location: {}",
+                style(prover_toml_path.display()).dim()
+            ),
+        );
+    } else {
+        ui::panel_info(
+            "IMPORTANT",
+            &format!(
+                "Before running 'zklense run', create and configure Prover.toml with the correct input values for your circuit.\n\nThe Prover.toml file should contain all the input parameters required by your Noir circuit's main function.\n\nExample for age_verifier template:\n  year_of_birth = \"1990\"\n  current_year = \"2024\"\n  age_threshold = \"21\""
+            ),
+        );
+    }
+
+    ui::blank();
 }
 
 /// Print a formatted configuration summary
