@@ -49,7 +49,7 @@ zklense streamlines the ZK development workflow by providing:
 
 - **Rust** (1.70+): [Install Rust](https://rustup.rs/) - Only needed for building from source
 - **Nargo** (Noir compiler): [Install Noir](https://noir-lang.org/docs/getting_started/installation/)
-- **Sunspot** (optional, for Solana deployment): [Sunspot](https://github.com/solana-foundation/noir-examples)
+- **Sunspot** (optional, for Solana deployment): [Sunspot](https://github.com/reilabs/sunspot)
 - **Solana CLI** (optional, for deployment): [Install Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
 
 ## Quick Start
