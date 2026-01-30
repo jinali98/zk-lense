@@ -127,7 +127,7 @@ zklense init ..
 - Creates `.zklense/config.toml` with default configuration:
   - Network: `devnet`
   - RPC URL: `https://api.devnet.solana.com`
-  - Web App URL: `https://zklense.netlify.app/`
+  - Web App URL: `https://zklense.tech/`
   - Version: `0.1.0`
 
 **Output:**
@@ -142,7 +142,7 @@ Project: /path/to/project
 Configuration:
   Network: devnet
   RPC URL: https://api.devnet.solana.com
-  Web App: https://zklense.netlify.app/
+  Web App: https://zklense.tech/
   Version: 0.1.0
 ```
 
@@ -586,7 +586,7 @@ zklense view /path/to/my_project
 **What it does:**
 1. Checks for `.zklense/report.json` in the project directory
 2. Validates the report is valid JSON
-3. Reads web app URL from `.zklense/config.toml` (default: `https://zklense.netlify.app/`)
+3. Reads web app URL from `.zklense/config.toml` (default: `https://zklense.tech/`)
 4. Finds an available port on localhost
 5. Starts a local HTTP server on that port
 6. Opens browser to: `<web_app_url>?port=<port>`
@@ -596,7 +596,7 @@ zklense view /path/to/my_project
 **Output:**
 ```
 ◉ Starting local server on port 54321
-◉ Opening viewer at https://zklense.netlify.app/?port=54321
+◉ Opening viewer at https://zklense.tech/?port=54321
 ◉ Serving report... Press Ctrl+C to stop.
 ```
 
@@ -669,7 +669,7 @@ zklense config show ./my_project
 
 🌐 Network:     devnet
 🔗 RPC URL:    https://api.devnet.solana.com
-🌐 Web App:     https://zklense.netlify.app/
+🌐 Web App:     https://zklense.tech/
 📦 Version:     0.1.0
 ```
 

@@ -197,7 +197,7 @@ Arguments:
   [PATH]  Project path (defaults to current directory)
 ```
 
-Starts a local server and opens the report in your browser at [zklenseile.netlify.app](https://zklenseile.netlify.app/).
+Starts a local server and opens the report in your browser at [zklense.tech](https://zklense.tech/).
 
 ---
 
@@ -394,7 +394,7 @@ zklense stores configuration in `.zklense/config.toml`:
 [settings]
 version = "0.1.0"
 initialized_at = "1234567890"
-web_app_url = "https://zklenseile.netlify.app/"
+web_app_url = "https://zklense.tech/"
 ```
 
 ## Dependencies
@@ -439,5 +439,5 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - [Noir Documentation](https://noir-lang.org/docs/)
 - [Sunspot Documentation](https://github.com/reilabs/sunspot)
 - [Solana Documentation](https://docs.solana.com/)
-- [zklense Web Viewer](https://zklenseile.netlify.app/)
+- [zklense Web Viewer](https://zklense.tech/)
 
