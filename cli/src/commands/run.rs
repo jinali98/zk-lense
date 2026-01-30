@@ -566,8 +566,10 @@ fn install_sunspot() -> io::Result<()> {
     let sunspot_binary = format!("{}/go/sunspot", sunspot_dir);
 
     // Try to move to /usr/local/bin (may require sudo)
+    // Use stdin(null) to prevent hanging on password prompt
     let install_result = Command::new("sudo")
-        .args(["mv", &sunspot_binary, "/usr/local/bin/sunspot"])
+        .args(["-n", "mv", &sunspot_binary, "/usr/local/bin/sunspot"])
+        .stdin(std::process::Stdio::null())
         .output();
 
     match install_result {
