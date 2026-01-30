@@ -1051,7 +1051,7 @@ zklense init /path/to/project
 
 **Solutions:**
 1. Install nargo: https://noir-lang.org/docs/getting_started/installation
-2. Install sunspot: https://github.com/pablodeymo/sunspot
+2. Install sunspot: https://github.com/reilabs/sunspot
 3. Verify in PATH: `which nargo` and `which sunspot`
 
 ### Network Connection Errors
@@ -1099,7 +1099,7 @@ zklense init /path/to/project
 - **Main Documentation:** [README.md](README.md)
 - **Noir Documentation:** https://noir-lang.org/docs/
 - **Solana Documentation:** https://docs.solana.com/
-- **Sunspot Documentation:** https://github.com/pablodeymo/sunspot
+- **Sunspot Documentation:** https://github.com/reilabs/sunspot
 
 ---
 

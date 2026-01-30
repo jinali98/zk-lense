@@ -93,4 +93,4 @@ git push origin master
 
 echo -e "${GREEN}✅ Release ${TAG} initiated!${NC}"
 echo -e "${GREEN}GitHub Actions will automatically build and create the release.${NC}"
-echo -e "${YELLOW}Monitor progress at: https://github.com/jinali98/zk-profiling-solana/actions${NC}"
+echo -e "${YELLOW}Monitor progress at: https://github.com/jinali98/zk-lense/actions${NC}"

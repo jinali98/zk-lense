@@ -233,7 +233,7 @@ fn check_prerequisites() -> io::Result<()> {
                 .push("Install nargo: https://noir-lang.org/docs/getting_started/installation");
         }
         if missing.contains(&"sunspot") {
-            suggestions.push("Install sunspot: https://github.com/pablodeymo/sunspot");
+            suggestions.push("Install sunspot: https://github.com/reilabs/sunspot");
         }
 
         ui::panel_error(

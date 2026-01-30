@@ -39,7 +39,7 @@ zklense streamlines the ZK development workflow by providing:
 
 ### Quick Install Options
 
-- **GitHub Releases** (Recommended): Download pre-built binaries from [Releases](https://github.com/jinali98/zk-profiling-solana/releases)
+- **GitHub Releases** (Recommended): Download pre-built binaries from [Releases](https://github.com/jinali98/zk-lense/releases)
 - **crates.io**: `cargo install zklense` (requires Rust)
 - **Homebrew**: `brew tap gihanrcg/zklense && brew install zklense` (macOS/Linux)
 - **Scoop**: `scoop install zklense` (Windows)
@@ -61,7 +61,10 @@ zklense generate --name my_circuit --template age_verifier
 # Navigate to the project
 cd my_circuit
 
-# Run the full build pipeline
+# Generate Prover file using Nargo
+nargo check
+
+# Run the full build pipeline once the Prover.toml file has all the private and public inputs
 zklense run
 
 # Simulate on Solana devnet
