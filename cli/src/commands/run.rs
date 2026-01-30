@@ -226,6 +226,11 @@ fn check_prerequisites() -> io::Result<()> {
     ui::blank();
 
     if !missing.is_empty() {
+        // If only sunspot is missing, offer to install it
+        if missing.len() == 1 && missing.contains(&"sunspot") {
+            return handle_missing_sunspot();
+        }
+
         let mut suggestions = Vec::new();
 
         if missing.contains(&"nargo") {
@@ -248,6 +253,432 @@ fn check_prerequisites() -> io::Result<()> {
             format!("Missing required commands: {}", missing.join(", ")),
         ));
     }
+
+    Ok(())
+}
+
+/// Handle missing sunspot - offer to install it automatically
+fn handle_missing_sunspot() -> io::Result<()> {
+    ui::panel_warning(
+        "SUNSPOT NOT FOUND",
+        "Sunspot is required to compile and prove Noir circuits for Solana.\n\nSunspot repository: https://github.com/reilabs/sunspot",
+    );
+
+    // Ask if user wants to install sunspot
+    let should_install = ui::confirm_custom(
+        "Would you like to install Sunspot now?",
+        &format!("{} Yes, install Sunspot", emoji::CHECKMARK),
+        &format!("{} No, I'll install it manually", emoji::CROSSMARK),
+    )?;
+
+    if !should_install {
+        ui::info("You can install Sunspot manually from: https://github.com/reilabs/sunspot");
+        ui::blank();
+        println!("  {} Installation steps:", emoji::BULB);
+        println!("     1. git clone https://github.com/reilabs/sunspot.git ~/sunspot");
+        println!("     2. cd ~/sunspot/go && go build -o sunspot .");
+        println!("     3. sudo mv sunspot /usr/local/bin/");
+        println!("     4. export GNARK_VERIFIER_BIN=\"$HOME/sunspot/gnark-solana/crates/verifier-bin\"");
+        ui::blank();
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Sunspot is required. Install it and try again.",
+        ));
+    }
+
+    ui::blank();
+
+    // Check prerequisites for sunspot installation
+    check_sunspot_prerequisites()?;
+
+    // Install sunspot
+    install_sunspot()?;
+
+    // Verify installation
+    if command_exists("sunspot") {
+        ui::panel_success(
+            "SUNSPOT INSTALLED",
+            "Sunspot has been installed successfully!\n\nYou may need to restart your terminal or run 'source ~/.zshrc' (or ~/.bashrc) to use it.",
+        );
+        Ok(())
+    } else {
+        ui::panel_warning(
+            "INSTALLATION COMPLETE",
+            "Sunspot has been built. Please restart your terminal or run:\n\n  source ~/.zshrc  (or ~/.bashrc)\n\nThen run 'zklense run' again.",
+        );
+        Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Please restart your terminal and try again.",
+        ))
+    }
+}
+
+/// Check prerequisites for sunspot installation (Go, Rust)
+fn check_sunspot_prerequisites() -> io::Result<()> {
+    ui::section(emoji::SEARCH, "Checking Sunspot Prerequisites");
+
+    let mut missing_prereqs = Vec::new();
+
+    // Check Go (required for sunspot)
+    if command_exists("go") {
+        println!("  {} {} found", emoji::SUCCESS, style("go").green());
+    } else {
+        println!("  {} {} not found", emoji::ERROR, style("go").red());
+        missing_prereqs.push("go");
+    }
+
+    // Check Rust/Cargo (required for gnark-solana verifier)
+    if command_exists("cargo") {
+        println!("  {} {} found", emoji::SUCCESS, style("cargo/rust").green());
+    } else {
+        println!("  {} {} not found", emoji::ERROR, style("cargo/rust").red());
+        missing_prereqs.push("rust");
+    }
+
+    // Check git (required for cloning)
+    if command_exists("git") {
+        println!("  {} {} found", emoji::SUCCESS, style("git").green());
+    } else {
+        println!("  {} {} not found", emoji::ERROR, style("git").red());
+        missing_prereqs.push("git");
+    }
+
+    ui::blank();
+
+    if !missing_prereqs.is_empty() {
+        // Offer to install missing prerequisites
+        return install_sunspot_prerequisites(&missing_prereqs);
+    }
+
+    Ok(())
+}
+
+/// Install missing prerequisites for sunspot
+fn install_sunspot_prerequisites(missing: &[&str]) -> io::Result<()> {
+    ui::panel_warning(
+        "MISSING SUNSPOT PREREQUISITES",
+        &format!(
+            "The following tools are required to install Sunspot:\n\n  • {}\n\nThese must be installed before Sunspot can be built.",
+            missing.join("\n  • ")
+        ),
+    );
+
+    let should_install = ui::confirm_custom(
+        "Would you like to install the missing prerequisites?",
+        &format!("{} Yes, install prerequisites", emoji::CHECKMARK),
+        &format!("{} No, I'll install them manually", emoji::CROSSMARK),
+    )?;
+
+    if !should_install {
+        ui::info("Please install the following manually:");
+        ui::blank();
+        for prereq in missing {
+            match *prereq {
+                "go" => {
+                    println!("  {} Go (1.24+): https://go.dev/doc/install", emoji::ARROW_RIGHT);
+                    println!("     Or on macOS: brew install go");
+                }
+                "rust" => {
+                    println!("  {} Rust: https://rustup.rs/", emoji::ARROW_RIGHT);
+                    println!("     Run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh");
+                }
+                "git" => {
+                    println!("  {} Git: https://git-scm.com/downloads", emoji::ARROW_RIGHT);
+                    println!("     Or on macOS: xcode-select --install");
+                }
+                _ => {}
+            }
+        }
+        ui::blank();
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Missing prerequisites. Install them and try again.",
+        ));
+    }
+
+    ui::blank();
+
+    for prereq in missing {
+        match *prereq {
+            "go" => install_go()?,
+            "rust" => install_rust()?,
+            "git" => {
+                ui::panel_error(
+                    "GIT REQUIRED",
+                    "Git must be installed manually.",
+                    None,
+                    Some(&[
+                        "macOS: xcode-select --install",
+                        "Linux: sudo apt install git (Ubuntu) or sudo dnf install git (Fedora)",
+                        "Download: https://git-scm.com/downloads",
+                    ]),
+                );
+                return Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "Git is required. Please install it manually.",
+                ));
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+/// Install Go using the appropriate method
+fn install_go() -> io::Result<()> {
+    ui::section(emoji::PACKAGE, "Installing Go");
+
+    // Check if brew is available (macOS/Linux)
+    if command_exists("brew") {
+        let spinner = ui::spinner("Installing Go via Homebrew...");
+
+        let output = Command::new("brew")
+            .args(["install", "go"])
+            .output()?;
+
+        if output.status.success() {
+            ui::spinner_success(&spinner, "Go installed via Homebrew");
+            return Ok(());
+        } else {
+            ui::spinner_error(&spinner, "Failed to install Go via Homebrew");
+        }
+    }
+
+    // Fallback: show manual instructions
+    ui::panel_info(
+        "INSTALL GO MANUALLY",
+        "Please install Go (1.24+) from:\n\nhttps://go.dev/doc/install\n\nOr use your package manager:\n  • macOS: brew install go\n  • Ubuntu: sudo apt install golang-go\n  • Fedora: sudo dnf install golang",
+    );
+
+    // Wait for user to confirm they've installed Go
+    ui::info("Press Enter after installing Go to continue...");
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+
+    if command_exists("go") {
+        ui::success("Go is now available");
+        Ok(())
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Go is still not found. Please install it and try again.",
+        ))
+    }
+}
+
+/// Install Rust using rustup
+fn install_rust() -> io::Result<()> {
+    ui::section(emoji::PACKAGE, "Installing Rust");
+
+    let spinner = ui::spinner("Installing Rust via rustup...");
+
+    // Use rustup installer
+    let output = Command::new("sh")
+        .args(["-c", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"])
+        .output()?;
+
+    if output.status.success() {
+        ui::spinner_success(&spinner, "Rust installed via rustup");
+
+        // Source cargo env
+        let home = std::env::var("HOME").unwrap_or_else(|_| "~".to_string());
+        let cargo_env = format!("{}/.cargo/env", home);
+        if std::path::Path::new(&cargo_env).exists() {
+            ui::info(&format!("Run 'source {}' or restart your terminal to use Rust", cargo_env));
+        }
+
+        Ok(())
+    } else {
+        ui::spinner_error(&spinner, "Failed to install Rust");
+
+        ui::panel_info(
+            "INSTALL RUST MANUALLY",
+            "Please install Rust from:\n\nhttps://rustup.rs/\n\nRun:\n  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+        );
+
+        Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Failed to install Rust. Please install it manually.",
+        ))
+    }
+}
+
+/// Install sunspot from GitHub
+fn install_sunspot() -> io::Result<()> {
+    ui::section(emoji::ROCKET, "Installing Sunspot");
+
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
+    let sunspot_dir = format!("{}/sunspot", home);
+
+    // Step 1: Clone the repository
+    if !std::path::Path::new(&sunspot_dir).exists() {
+        let spinner = ui::spinner("Cloning Sunspot repository...");
+
+        let output = Command::new("git")
+            .args(["clone", "https://github.com/reilabs/sunspot.git", &sunspot_dir])
+            .output()?;
+
+        if !output.status.success() {
+            ui::spinner_error(&spinner, "Failed to clone Sunspot repository");
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Failed to clone repository: {}", stderr),
+            ));
+        }
+
+        ui::spinner_success(&spinner, "Cloned Sunspot repository");
+    } else {
+        ui::info(&format!("Sunspot directory already exists at: {}", sunspot_dir));
+
+        // Pull latest changes
+        let spinner = ui::spinner("Updating Sunspot repository...");
+        let _ = Command::new("git")
+            .args(["-C", &sunspot_dir, "pull"])
+            .output();
+        ui::spinner_success(&spinner, "Updated Sunspot repository");
+    }
+
+    // Step 2: Build sunspot
+    let spinner = ui::spinner("Building Sunspot (this may take a few minutes)...");
+
+    let go_dir = format!("{}/go", sunspot_dir);
+    let output = Command::new("go")
+        .args(["build", "-o", "sunspot", "."])
+        .current_dir(&go_dir)
+        .output()?;
+
+    if !output.status.success() {
+        ui::spinner_error(&spinner, "Failed to build Sunspot");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("Failed to build Sunspot: {}", stderr),
+        ));
+    }
+
+    ui::spinner_success(&spinner, "Built Sunspot");
+
+    // Step 3: Install to PATH
+    let spinner = ui::spinner("Installing Sunspot to PATH...");
+
+    let sunspot_binary = format!("{}/go/sunspot", sunspot_dir);
+
+    // Try to move to /usr/local/bin (may require sudo)
+    let install_result = Command::new("sudo")
+        .args(["mv", &sunspot_binary, "/usr/local/bin/sunspot"])
+        .output();
+
+    match install_result {
+        Ok(output) if output.status.success() => {
+            ui::spinner_success(&spinner, "Installed Sunspot to /usr/local/bin");
+        }
+        _ => {
+            // Fallback: add to ~/bin
+            let user_bin = format!("{}/bin", home);
+            fs::create_dir_all(&user_bin)?;
+            let user_sunspot = format!("{}/sunspot", user_bin);
+
+            fs::copy(&sunspot_binary, &user_sunspot)?;
+
+            // Make executable
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let mut perms = fs::metadata(&user_sunspot)?.permissions();
+                perms.set_mode(0o755);
+                fs::set_permissions(&user_sunspot, perms)?;
+            }
+
+            ui::spinner_success(&spinner, &format!("Installed Sunspot to {}", user_sunspot));
+
+            // Add to PATH in shell config
+            add_to_shell_path(&user_bin)?;
+        }
+    }
+
+    // Step 4: Set GNARK_VERIFIER_BIN environment variable
+    let verifier_bin = format!("{}/gnark-solana/crates/verifier-bin", sunspot_dir);
+    set_gnark_verifier_bin_env(&verifier_bin)?;
+
+    ui::blank();
+    ui::panel_success(
+        "SUNSPOT INSTALLATION COMPLETE",
+        &format!(
+            "Sunspot has been installed!\n\nRepository: {}\nVerifier: {}\n\nPlease restart your terminal or run:\n  source ~/.zshrc  (or ~/.bashrc)",
+            sunspot_dir,
+            verifier_bin
+        ),
+    );
+
+    Ok(())
+}
+
+/// Add a directory to the shell PATH
+fn add_to_shell_path(dir: &str) -> io::Result<()> {
+    let home = std::env::var("HOME").unwrap_or_else(|_| "~".to_string());
+
+    // Determine shell config file
+    let shell = std::env::var("SHELL").unwrap_or_default();
+    let config_file = if shell.contains("zsh") {
+        format!("{}/.zshrc", home)
+    } else {
+        format!("{}/.bashrc", home)
+    };
+
+    let export_line = format!("\n# Added by zklense for Sunspot\nexport PATH=\"{}:$PATH\"\n", dir);
+
+    // Check if already in config
+    if let Ok(contents) = fs::read_to_string(&config_file) {
+        if contents.contains(dir) {
+            return Ok(());
+        }
+    }
+
+    // Append to config file
+    use std::io::Write;
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&config_file)?;
+    file.write_all(export_line.as_bytes())?;
+
+    ui::info(&format!("Added {} to PATH in {}", dir, config_file));
+
+    Ok(())
+}
+
+/// Set GNARK_VERIFIER_BIN environment variable in shell config
+fn set_gnark_verifier_bin_env(verifier_path: &str) -> io::Result<()> {
+    let home = std::env::var("HOME").unwrap_or_else(|_| "~".to_string());
+
+    // Determine shell config file
+    let shell = std::env::var("SHELL").unwrap_or_default();
+    let config_file = if shell.contains("zsh") {
+        format!("{}/.zshrc", home)
+    } else {
+        format!("{}/.bashrc", home)
+    };
+
+    let export_line = format!("\n# Sunspot GNARK verifier path (added by zklense)\nexport GNARK_VERIFIER_BIN=\"{}\"\n", verifier_path);
+
+    // Check if already in config
+    if let Ok(contents) = fs::read_to_string(&config_file) {
+        if contents.contains("GNARK_VERIFIER_BIN") {
+            return Ok(());
+        }
+    }
+
+    // Append to config file
+    use std::io::Write;
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&config_file)?;
+    file.write_all(export_line.as_bytes())?;
+
+    ui::info(&format!("Set GNARK_VERIFIER_BIN in {}", config_file));
 
     Ok(())
 }
