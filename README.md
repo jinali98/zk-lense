@@ -61,7 +61,10 @@ zklense generate --name my_circuit --template age_verifier
 # Navigate to the project
 cd my_circuit
 
-# Run the full build pipeline
+# Generate Prover file using Nargo
+nargo check
+
+# Run the full build pipeline once the Prover.toml file has all the private and public inputs
 zklense run
 
 # Simulate on Solana devnet
