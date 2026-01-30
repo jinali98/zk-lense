@@ -586,10 +586,11 @@ pub async fn run_simulate(program_id_arg: Option<String>) -> Result<()> {
         data: instruction_data,
     };
 
-    // Create compute budget instruction manually
+    // Create compute budget instruction automatically
+    // Use MAX_COMPUTE_UNITS as default to ensure sufficient budget for any proof size
     let compute_budget_program_id =
         Pubkey::from_str("ComputeBudget111111111111111111111111111111")?;
-    let compute_units = 500_000u32;
+    let compute_units = MAX_COMPUTE_UNITS;
 
     let mut compute_unit_limit_data = vec![2u8, 0, 0, 0];
     compute_unit_limit_data.extend_from_slice(&compute_units.to_le_bytes());
